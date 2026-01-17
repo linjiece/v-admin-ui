@@ -1,0 +1,57 @@
+/* 覆盖 el-dialog 的默认样式 */
+
+.my-dialog .el-dialog {
+  padding: 0 !important;
+}
+
+.my-dialog .el-dialog__header {
+  padding: 0 20px 16px;
+  margin-right: 0;
+}
+
+.my-dialog .el-dialog__body {
+  padding: 0 !important;
+}
+
+.my-dialog .el-dialog__footer {
+  padding: 16px 20px 0;
+}
+
+/* 限制 dialog 最大高度 */
+.my-dialog .el-dialog {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.my-dialog .el-dialog__body {
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.my-dialog .my-dialog-body {
+  height: 100%;
+}
+
+/* 全屏模式下的样式调整 */
+.my-dialog.is-fullscreen .el-dialog {
+  max-height: 100vh;
+}
+
+.my-dialog.is-fullscreen .el-dialog__body {
+  height: calc(100vh - 130px);
+  overflow: hidden;
+}
+
+.my-dialog.is-fullscreen .my-dialog-body {
+  height: 100%;
+}
+
+.my-dialog.is-fullscreen .el-scrollbar {
+  height: 100%;
+}
+
+.my-dialog.is-fullscreen .el-scrollbar__wrap {
+  height: 100%;
+}

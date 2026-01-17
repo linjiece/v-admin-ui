@@ -1,0 +1,40 @@
+.my-drawer {
+  --drawer-header-height: 56px;
+  --drawer-footer-height: 64px;
+}
+
+.my-drawer .el-drawer__header {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  height: var(--drawer-header-height);
+  box-sizing: border-box;
+}
+
+.my-drawer .el-drawer__body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - var(--drawer-header-height));
+}
+
+.my-drawer .my-drawer-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.my-drawer .el-drawer__footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  height: var(--drawer-footer-height);
+  box-sizing: border-box;
+}
+
+.my-drawer.is-fullscreen .el-drawer__body {
+  height: calc(100vh - var(--drawer-header-height) - var(--drawer-footer-height));
+}
+
+.my-drawer.is-fullscreen .my-drawer-body {
+  height: 100%;
+}

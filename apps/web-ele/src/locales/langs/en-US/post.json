@@ -1,0 +1,35 @@
+{
+  "name": "Post",
+  "title": "Post Management",
+  "postName": "Post Name",
+  "postCode": "Post Code",
+  "postType": "Post Type",
+  "postLevel": "Post Level",
+  "department": "Department",
+  "description": "Post Description",
+  "status": "Status",
+  "operation": "Operation",
+  "edit": "Edit",
+  "codeFormatError": "Post code can only contain letters, numbers, underscores and hyphens",
+  "selectDepartment": "Please select department",
+  "descriptionPlaceholder": "Please enter post description/responsibilities",
+  "selectUsersFirst": "Please select users first",
+  "addUsersSuccess": "Added successfully",
+  "removeUsersConfirm": "Are you sure you want to delete {0} selected users?",
+  "removeUsersSuccess": "Deleted successfully",
+  "removeUsersFailed": "Delete failed",
+  "types": {
+    "management": "Management",
+    "technical": "Technical",
+    "business": "Business",
+    "functional": "Functional",
+    "other": "Other"
+  },
+  "levels": {
+    "HNGX_001": "Center General Manager",
+    "HNGX_002": "Center Deputy General Manager",
+    "HNGX_003": "Department Manager",
+    "HNGX_004": "Employee",
+    "HNGX_005": "Digital Employee"
+  }
+}

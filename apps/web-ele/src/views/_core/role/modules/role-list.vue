@@ -245,8 +245,8 @@ onMounted(() => {
     <template #modal>
       <RoleFormModal ref="roleFormModalRef" @success="onRoleFormSuccess" />
     </template>
-    <UserRole ref="userRoleRef" />
   </CardList>
+  <UserRole ref="userRoleRef" />
 </template>
 
 <style scoped>

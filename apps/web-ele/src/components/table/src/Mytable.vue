@@ -144,7 +144,7 @@ const debouncedSearch = () => {
 };
 
 // Initialize Form
-const { Form, formApi } = useTableForm({
+const [Form, formApi] = useTableForm({
   compact: true,
   handleSubmit: async () => {
     if (debounceTimer) {

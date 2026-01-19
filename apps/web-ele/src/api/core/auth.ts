@@ -17,6 +17,11 @@ export namespace AuthApi {
     data: LoginResult;
     status: number;
   }
+
+  export interface PermissionsResult {
+    permissions: string[];
+    is_superuser: boolean;
+  }
 }
 
 /**
@@ -54,5 +59,5 @@ export async function logoutApi() {
  * 获取用户权限码
  */
 export async function getAccessCodesApi() {
-  return requestClient.get<string[]>('/api/core/userinfo');
+  return requestClient.get<AuthApi.PermissionsResult>('/api/core/permissions');
 }

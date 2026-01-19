@@ -2,7 +2,7 @@
   "name": "用户",
   "title": "用户管理",
   "userName": "用户名称",
-  "account": "交建通账号",
+  "account": "4A账号",
   "avatar": "头像",
   "avatarHelp": "支持jpg、png格式，大小不超过2MB",
   "selectAvatar": "选择头像",

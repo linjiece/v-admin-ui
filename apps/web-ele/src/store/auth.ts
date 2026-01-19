@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
         // 获取用户信息并存储到 accessStore 中
         const [fetchUserInfoResult, accessCodes] = await Promise.all([
           fetchUserInfo(),
-          getAccessCodesApi(),
+          fetchPermissionCodes(),
         ]);
 
         userInfo = fetchUserInfoResult;
@@ -109,6 +109,11 @@ export const useAuthStore = defineStore('auth', () => {
     userInfo = await getUserInfoApi();
     userStore.setUserInfo(userInfo);
     return userInfo;
+  }
+
+  async function fetchPermissionCodes() {
+    const result = await getAccessCodesApi();
+    return result.permissions;
   }
 
   function $reset() {

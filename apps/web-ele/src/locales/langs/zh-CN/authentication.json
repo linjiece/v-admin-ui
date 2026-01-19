@@ -32,6 +32,6 @@
   "microsoftLoginFailed": "微软登录失败，请稍后重试",
   "dingtalkLoginFailed": "钉钉登录失败，请稍后重试",
   "feishuLoginFailed": "飞书登录失败，请稍后重试",
-  "welcomeBack": "华南财务共享中心",
-  "loginSubtitle": "请使用交建通账号登录"
+  "welcomeBack": "华南共享",
+  "loginSubtitle": "请使用4A账号登录"
 }

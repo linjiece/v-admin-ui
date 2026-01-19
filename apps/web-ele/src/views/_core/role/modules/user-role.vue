@@ -149,7 +149,7 @@ defineExpose(DrawerApi);
                 label: '添加用户',
                 type: 'primary',
                 icon: 'ep:plus',
-                auth: ['admin', 'sys:rbac:saveUserRole'],
+                auth: ['admin', 'role:create_users_by_role_id'],
                 onClick: handleAdd.bind(null),
               },
             ]"
@@ -158,7 +158,7 @@ defineExpose(DrawerApi);
                 label: '移除用户',
                 icon: 'ep:delete',
                 ifShow: hasTopTableDropDownActions,
-                auth: ['admin', 'sys:rbac:removeUserRole'],
+                auth: ['admin', 'role:delete_users_by_role_id'],
                 popConfirm: {
                   title: '确定移除用户吗？',
                   confirm: handleRemoveUserRole.bind(null, false),
@@ -183,7 +183,7 @@ defineExpose(DrawerApi);
                 link: true,
                 icon: 'ep:delete',
                 size: 'small',
-                auth: ['admin', 'sys:rbac:removeUserRole'],
+                auth: ['admin', 'role:delete_users_by_role_id'],
                 popConfirm: {
                   title: '确定移除用户吗？',
                   confirm: handleRemoveUserRole.bind(null, row),

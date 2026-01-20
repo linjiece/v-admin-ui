@@ -19,6 +19,11 @@
     "system": "系统角色",
     "custom": "自定义角色"
   },
+  "user": {
+    "addUser": "添加用户",
+    "removeUser": "移除用户",
+    "removeUserConfirm": "确定移除用户吗？"
+  },
   "dataScopes": {
     "self": "仅本人数据",
     "dept": "本部门数据",

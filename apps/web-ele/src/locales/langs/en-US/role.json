@@ -19,6 +19,11 @@
     "system": "System Role",
     "custom": "Custom Role"
   },
+  "user": {
+    "addUser": "Add User",
+    "removeUser": "Remove User",
+    "removeUserConfirm": "Are you sure to remove this user from the role?"
+  },
   "dataScopes": {
     "self": "Own Data Only",
     "dept": "Department Data",

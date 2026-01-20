@@ -87,6 +87,7 @@
   "setting": "Settings",
   "columnSetting": "Column Settings",
   "sort": "Sort",
+  "batchOperations": "Batch Operations",
   "batchDelete": "Batch Delete",
   "export": "Export",
   "import": "Import",

@@ -111,12 +111,6 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       doRefreshToken,
       enableRefreshToken: preferences.app.enableRefreshToken,
       formatToken,
-      // 登录接口和刷新token接口不处理401错误
-      shouldHandle: (error) => {
-        const url = error?.config?.url || '';
-        // 登录、刷新token等接口的401错误不处理，让错误消息拦截器处理
-        return !url.includes('/login') && !url.includes('/refresh_token');
-      },
     }),
   );
 
@@ -126,31 +120,9 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       // 这里可以根据业务进行定制,你可以拿到 error 内的信息进行定制化处理，根据不同的 code 做不同的提示，而不是直接使用 message.error 提示 msg
       // 当前mock接口返回的错误字段是 error 或者 message
       const responseData = error?.response?.data ?? {};
-      const status = error?.response?.status;
-      let errorMessage =
-        responseData?.message ||
-        responseData?.error ||
-        responseData?.msg ||
-        responseData?.detail ||
-        msg;
-      // 特殊处理403禁止访问
-      if (status === 403) {
-        errorMessage = errorMessage || '您没有权限访问此资源';
-      }
-
-      // 特殊处理401未授权
-      if (status === 401) {
-        errorMessage = errorMessage || '认证失败，请重新登录';
-      }
-      console.error('[API Error]', {
-        status,
-        message: errorMessage,
-        data: responseData,
-      });
-
-      if (errorMessage) {
-        ElMessage.error(errorMessage || msg);
-      }
+      const errorMessage = responseData?.error ?? responseData?.message ?? '';
+      // 如果没有错误信息，则会根据状态码进行提示
+      ElMessage.error(errorMessage || msg);
     }),
   );
 

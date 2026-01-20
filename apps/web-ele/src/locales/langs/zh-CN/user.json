@@ -1,8 +1,10 @@
 {
   "name": "用户",
+  "namePlaceholder": "请输入用户名称",
   "title": "用户管理",
   "userName": "用户名称",
   "account": "4A账号",
+  "accountPlaceholder": "请输入4A账号",
   "avatar": "头像",
   "avatarHelp": "支持jpg、png格式，大小不超过2MB",
   "selectAvatar": "选择头像",

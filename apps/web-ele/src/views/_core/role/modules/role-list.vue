@@ -4,6 +4,7 @@ import type { CardListOptions } from '#/components/card-list';
 
 import { onMounted, ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 
@@ -26,7 +27,7 @@ const searchKeyword = ref<string>('');
 const hoveredRoleId = ref<string>();
 const roleFormModalRef = ref<InstanceType<typeof RoleFormModal>>();
 const userRoleRef = ref();
-
+const { hasAccessByRoles, hasAccessByCodes } = useAccess();
 // 卡片列表配置
 const cardListOptions: CardListOptions<Role> = {
   searchFields: [{ field: 'name' }, { field: 'code' }],
@@ -71,11 +72,8 @@ function onAddRole() {
  * 打开添加用户对话框
  */
 function onAddUsers(role: Role) {
-  userRoleRef.value
-    ?.setData({
-      record: role,
-    })
-    .open();
+  userRoleRef.value?.setData({ record: role });
+  userRoleRef.value?.open();
 }
 /**
  * 打开编辑角色对话框
@@ -205,8 +203,9 @@ onMounted(() => {
     <!-- 操作按钮 -->
     <template #actions="{ item }">
       <div class="ml-2 flex flex-shrink-0 gap-0.5" @click.stop>
-        <ElTooltip :content="$t('role.addUsers')" placement="top">
+        <ElTooltip :content="$t('role.user.addUser')" placement="top">
           <ElButton
+            v-if="hasAccessByCodes(['role:user:add'])"
             type="primary"
             text
             size="small"
@@ -218,6 +217,7 @@ onMounted(() => {
         </ElTooltip>
         <ElTooltip :content="$t('role.edit')" placement="top">
           <ElButton
+            v-if="hasAccessByCodes(['role:edit'])"
             type="primary"
             text
             size="small"
@@ -228,6 +228,7 @@ onMounted(() => {
           </ElButton>
         </ElTooltip>
         <ElButton
+          v-if="hasAccessByCodes(['role:delete'])"
           type="danger"
           text
           size="small"
@@ -245,8 +246,8 @@ onMounted(() => {
     <template #modal>
       <RoleFormModal ref="roleFormModalRef" @success="onRoleFormSuccess" />
     </template>
-    <UserRole ref="userRoleRef" />
   </CardList>
+  <UserRole ref="userRoleRef" />
 </template>
 
 <style scoped>

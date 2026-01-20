@@ -88,6 +88,7 @@
   "setting": "设置",
   "columnSetting": "列设置",
   "sort": "排序",
+  "batchOperations": "批量操作",
   "batchDelete": "批量删除",
   "export": "导出",
   "import": "导入",

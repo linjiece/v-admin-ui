@@ -6,6 +6,7 @@ import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { $t } from '@vben/locales';
 
 import { ElButton as Button, ElMessage as message } from 'element-plus';
 
@@ -14,6 +15,12 @@ import { getRoleUsersApi, removeRoleUsersApi } from '#/api/core/role';
 import { TableAction } from '#/components/table-action';
 
 import AddUser from './add-user-modal.vue';
+
+const tAccount = $t('user.account');
+const tAccountPlaceholder = $t('user.accountPlaceholder');
+const tName = $t('user.name');
+const tNamePlaceholder = $t('user.namePlaceholder');
+const tOperate = $t('user.operation');
 
 const record = ref();
 const hasTopTableDropDownActions = ref(false);
@@ -27,18 +34,18 @@ const formOptions: VbenFormProps = {
     {
       component: 'Input',
       fieldName: 'username',
-      label: '4A账号',
+      label: tAccount,
       componentProps: {
-        placeholder: '请输入4A账号',
+        placeholder: tAccountPlaceholder,
         allowClear: true,
       },
     },
     {
       component: 'Input',
       fieldName: 'name',
-      label: '姓名',
+      label: tName,
       componentProps: {
-        placeholder: '请输入姓名',
+        placeholder: tNamePlaceholder,
         allowClear: true,
       },
     },
@@ -47,11 +54,11 @@ const formOptions: VbenFormProps = {
 const gridOptions: VxeGridProps<any> = {
   columns: [
     { type: 'checkbox', width: 60 },
-    { field: 'username', title: '4A账号' },
-    { field: 'name', title: '姓名' },
+    { field: 'username', title: tAccount },
+    { field: 'name', title: tName },
     {
       width: 160,
-      title: '操作',
+      title: tOperate,
       align: 'center',
       slots: { default: 'ACTION' },
       fixed: 'right',
@@ -123,13 +130,13 @@ const handleRemoveUserRole = async (row: any) => {
     ? [row.id]
     : gridApi.grid.getCheckboxRecords().map((item) => item.id);
   if (ids.length === 0) {
-    message.info('请选择至少一条数据');
+    message.info($t('user.selectUserToDelete'));
     return;
   }
 
   try {
     await removeRoleUsersApi(record.value.id, { user_ids: ids });
-    message.success('删除成功');
+    message.success($t('common.deleteSuccess'));
     gridApi.reload();
   } catch {
     /* 网络/业务错误已由拦截器弹窗，这里可不处理 */
@@ -140,13 +147,13 @@ defineExpose(DrawerApi);
 </script>
 <template>
   <div>
-    <Drawer class="w-[60%]" title="成员管理">
+    <Drawer class="w-[60%]" :title="$t('user.title')">
       <Grid>
         <template #toolbar-buttons>
           <TableAction
             :actions="[
               {
-                label: '添加用户',
+                label: $t('role.user.addUser'),
                 type: 'primary',
                 icon: 'ep:plus',
                 auth: ['admin', 'role:create_users_by_role_id'],
@@ -155,12 +162,12 @@ defineExpose(DrawerApi);
             ]"
             :drop-down-actions="[
               {
-                label: '移除用户',
+                label: $t('role.user.removeUser'),
                 icon: 'ep:delete',
                 ifShow: hasTopTableDropDownActions,
                 auth: ['admin', 'role:delete_users_by_role_id'],
                 popConfirm: {
-                  title: '确定移除用户吗？',
+                  title: $t('role.user.removeUserConfirm'),
                   confirm: handleRemoveUserRole.bind(null, false),
                 },
               },
@@ -168,7 +175,7 @@ defineExpose(DrawerApi);
           >
             <template #more>
               <Button style="margin-left: 8px">
-                批量操作
+                $t('common.batchOperations')
                 <IconifyIcon icon="ep:arrow-down" />
               </Button>
             </template>
@@ -178,14 +185,14 @@ defineExpose(DrawerApi);
           <TableAction
             :actions="[
               {
-                label: '移除用户',
+                label: $t('role.user.removeUser'),
                 type: 'primary',
                 link: true,
                 icon: 'ep:delete',
                 size: 'small',
                 auth: ['admin', 'role:delete_users_by_role_id'],
                 popConfirm: {
-                  title: '确定移除用户吗？',
+                  title: $t('role.user.removeUserConfirm'),
                   confirm: handleRemoveUserRole.bind(null, row),
                 },
               },

@@ -1,8 +1,10 @@
 {
   "name": "User",
+  "namePlaceholder": "Please enter user name",
   "title": "User Management",
   "userName": "User Name",
   "account": "Account",
+  "accountPlaceholder": "Please enter account",
   "avatar": "Avatar",
   "avatarHelp": "Support jpg, png format, size no more than 2MB",
   "selectAvatar": "Select Avatar",

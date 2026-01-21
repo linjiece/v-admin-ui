@@ -3,6 +3,7 @@ import type { User } from '#/api/core';
 
 import { ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 import { Edit, Plus, Trash2 } from '@vben/icons';
 import { $t } from '@vben/locales';
@@ -24,6 +25,8 @@ import {
 import UserForm from './modules/user-form.vue';
 
 defineOptions({ name: 'SystemUser' });
+
+const { hasAccessByCodes } = useAccess();
 
 const userFormRef = ref<InstanceType<typeof UserForm>>();
 const selectedRows = ref<User[]>([]);
@@ -64,11 +67,6 @@ function onCreate() {
  * 删除单个用户
  */
 function onDelete(row: User) {
-  if (row.id === 'a0000000-0000-0000-0000-000000000001') {
-    ElMessage.warning($t('user.cannotDeleteAdmin'));
-    return;
-  }
-
   ElMessageBox.confirm(
     $t('ui.actionMessage.deleteConfirm', [row.name]),
     $t('common.delete'),
@@ -98,15 +96,6 @@ function onDelete(row: User) {
 function onBatchDelete() {
   if (selectedRows.value.length === 0) {
     ElMessage.warning($t('user.selectUsersToDelete'));
-    return;
-  }
-
-  // 检查是否包含管理员账户
-  const hasAdmin = selectedRows.value.some(
-    (row) => row.id === 'a0000000-0000-0000-0000-000000000001',
-  );
-  if (hasAdmin) {
-    ElMessage.warning($t('user.cannotDeleteAdmin'));
     return;
   }
 
@@ -143,9 +132,7 @@ function onBatchDelete() {
 // 处理选择变化
 function handleSelectionChange(items: Record<string, any>[]) {
   // 过滤掉管理员账户
-  selectedRows.value = (items as User[]).filter(
-    (row) => row.id !== 'a0000000-0000-0000-0000-000000000001',
-  );
+  selectedRows.value = (items as User[]).filter((row) => row.id !== '00000000');
 }
 
 // 列表 API
@@ -210,10 +197,20 @@ function refreshGrid() {
     <Grid @selection-change="handleSelectionChange">
       <!-- 工具栏操作 -->
       <template #toolbar-actions>
-        <ElButton type="primary" :icon="Plus" @click="onCreate">
+        <ElButton
+          v-if="hasAccessByCodes(['user:create'])"
+          type="primary"
+          :icon="Plus"
+          @click="onCreate"
+        >
           {{ $t('ui.actionTitle.create', [$t('user.name')]) }}
         </ElButton>
-        <ElButton type="danger" plain @click="onBatchDelete">
+        <ElButton
+          v-if="hasAccessByCodes(['user:delete'])"
+          type="danger"
+          plain
+          @click="onBatchDelete"
+        >
           {{ $t('user.batchDelete') }}
           {{ selectedRows.length > 0 ? `(${selectedRows.length})` : '' }}
         </ElButton>
@@ -266,11 +263,17 @@ function refreshGrid() {
 
       <!-- 操作列 -->
       <template #cell-actions="{ row }">
-        <ElButton link type="primary" :icon="Edit" @click="onEdit(row)">
+        <ElButton
+          v-if="hasAccessByCodes(['user:edit'])"
+          link
+          type="primary"
+          :icon="Edit"
+          @click="onEdit(row)"
+        >
           {{ $t('common.edit') }}
         </ElButton>
         <ElButton
-          v-if="row.id !== 'a0000000-0000-0000-0000-000000000001'"
+          v-if="hasAccessByCodes(['user:delete'])"
           link
           type="danger"
           :icon="Trash2"

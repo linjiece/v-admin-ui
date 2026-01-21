@@ -1,0 +1,23 @@
+.line-group {
+  @apply flex items-center gap-1.5;
+}
+
+/* 统一描边样式 */
+.line-btn {
+  @apply border-slate-300 text-slate-500
+         hover:border-sky-400 hover:text-sky-500
+         transition;
+  /* 去掉 el-button 自带的背景 */
+  background: transparent !important;
+}
+
+/* 不同语义色 -> 超淡描边+图标 */
+.subtle-add {
+  @apply text-sky-500 hover:text-sky-600 hover:bg-sky-50;
+}
+.subtle-edit {
+  @apply text-slate-500 hover:text-sky-600 hover:bg-sky-50;
+}
+.subtle-del {
+  @apply text-rose-500 hover:text-rose-600 hover:bg-rose-50;
+}

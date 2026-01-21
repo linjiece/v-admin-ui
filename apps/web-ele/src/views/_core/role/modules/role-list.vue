@@ -8,13 +8,15 @@ import { useAccess } from '@vben/access';
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 
-import { ElButton, ElMessage, ElMessageBox, ElTooltip } from 'element-plus';
+import { ElMessage, ElMessageBox, ElTooltip } from 'element-plus';
 
 import { deleteRoleApi, getRoleListApi } from '#/api/core/role';
 import { CardList } from '#/components/card-list';
 
 import RoleFormModal from './role-form-modal.vue';
 import UserRole from './user-role.vue';
+
+import './style.css';
 
 const emit = defineEmits<{
   select: [roleId: string | undefined];
@@ -202,12 +204,13 @@ onMounted(() => {
 
     <!-- 操作按钮 -->
     <template #actions="{ item }">
-      <div class="ml-2 flex flex-shrink-0 gap-0.5" @click.stop>
-        <ElTooltip :content="$t('role.user.addUser')" placement="top">
+      <div class="line-group" @click.stop>
+        <ElTooltip :content="$t('role.user.addUser ')" placement="top">
           <ElButton
             v-if="hasAccessByCodes(['role:user:add'])"
-            type="primary"
-            text
+            class="line-btn subtle-add"
+            type="info"
+            plain
             size="small"
             circle
             @click="onAddUsers(item)"
@@ -215,11 +218,13 @@ onMounted(() => {
             <IconifyIcon icon="ep:plus" class="size-4" />
           </ElButton>
         </ElTooltip>
+
         <ElTooltip :content="$t('role.edit')" placement="top">
           <ElButton
             v-if="hasAccessByCodes(['role:edit'])"
+            class="line-btn subtle-edit"
             type="primary"
-            text
+            plain
             size="small"
             circle
             @click="onEditRole(item, $event)"
@@ -227,18 +232,20 @@ onMounted(() => {
             <IconifyIcon icon="ep:edit" class="size-4" />
           </ElButton>
         </ElTooltip>
-        <ElButton
-          v-if="hasAccessByCodes(['role:delete'])"
-          type="danger"
-          text
-          size="small"
-          circle
-          style="margin-left: 0"
-          :title="$t('common.delete')"
-          @click="onDeleteRole(item, $event)"
-        >
-          <IconifyIcon icon="ep:delete" class="size-4" />
-        </ElButton>
+
+        <ElTooltip :content="$t('common.delete')" placement="top">
+          <ElButton
+            v-if="hasAccessByCodes(['role:delete'])"
+            class="line-btn subtle-del"
+            type="danger"
+            plain
+            size="small"
+            circle
+            @click="onDeleteRole(item, $event)"
+          >
+            <IconifyIcon icon="ep:delete" class="size-4" />
+          </ElButton>
+        </ElTooltip>
       </div>
     </template>
 

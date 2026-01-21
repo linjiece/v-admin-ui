@@ -197,7 +197,7 @@ const fetchPermissionList = async (params: any) => {
   };
 };
 
-// 使用 ZqTable
+// 使用 MyTable
 const [Grid, gridApi] = useMyTable({
   gridOptions: {
     columns: useMyTableColumns(),

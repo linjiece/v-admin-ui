@@ -1,0 +1,49 @@
+# 简化版本 - 单阶段构建
+FROM node:22-slim AS builder
+
+# 设置环境变量
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV NODE_OPTIONS=--max-old-space-size=8192
+ENV TZ=Asia/Shanghai
+
+# 安装pnpm和必要工具
+RUN npm i -g corepack && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        nginx \
+        tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制所有文件
+COPY . .
+
+# 安装依赖并构建
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile && \
+    pnpm run build:ele
+
+# 配置nginx
+RUN echo "types { application/javascript js mjs; }" > /etc/nginx/conf.d/mjs.conf && \
+    rm -rf /etc/nginx/conf.d/default.conf && \
+    cp /app/scripts/deploy/nginx.conf /etc/nginx/nginx.conf
+
+# 复制构建产物到nginx目录
+RUN cp -r /app/apps/web-ele/dist/* /usr/share/nginx/html/
+
+# 清理构建文件
+RUN rm -rf /app/node_modules && \
+    rm -rf /app/packages/*/node_modules && \
+    pnpm store prune || true
+
+# 暴露端口
+EXPOSE 8080
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/ || exit 1
+
+# 启动nginx
+CMD ["nginx", "-g", "daemon off;"]

@@ -205,7 +205,7 @@ onMounted(() => {
     <!-- 操作按钮 -->
     <template #actions="{ item }">
       <div class="line-group" @click.stop>
-        <ElTooltip :content="$t('role.user.addUser ')" placement="top">
+        <ElTooltip :content="$t('role.user.addUser')" placement="top">
           <ElButton
             v-if="hasAccessByCodes(['role:user:add'])"
             class="line-btn subtle-add"

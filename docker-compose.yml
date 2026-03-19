@@ -1,0 +1,49 @@
+
+services:
+  web-ele:
+    build:
+      context: .
+      dockerfile: Dockerfile.web-ele
+    container_name: vben-web-ele
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - v-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 可选：添加nginx反向代理（用于生产环境多服务部署）
+  nginx-proxy:
+    image: nginx:stable-alpine
+    container_name: vben-nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web-ele
+    networks:
+      - v-network
+    restart: unless-stopped
+    profiles:
+      - with-proxy
+
+networks:
+  v-network:
+    external: true
+    name: v-network
+
+volumes:
+  logs:
+    driver: local

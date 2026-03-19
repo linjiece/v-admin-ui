@@ -118,6 +118,13 @@ const ElUpload = defineAsyncComponent(() =>
   ]).then(([res]) => res.ElUpload),
 );
 
+const ElCascader = defineAsyncComponent(() =>
+  Promise.all([
+    import('element-plus/es/components/cascader/index'),
+    import('element-plus/es/components/cascader/style/css'),
+  ]).then(([res]) => res.ElCascader),
+);
+
 const withDefaultPlaceholder = <T extends Component>(
   component: T,
   type: 'input' | 'select',
@@ -156,6 +163,7 @@ const withDefaultPlaceholder = <T extends Component>(
 export type ComponentType =
   | 'ApiSelect'
   | 'ApiTreeSelect'
+  | 'Cascader'
   | 'Checkbox'
   | 'CheckboxGroup'
   | 'DatePicker'
@@ -204,6 +212,7 @@ async function initComponentAdapter() {
         visibleEvent: 'onVisibleChange',
       },
     ),
+    Cascader: withDefaultPlaceholder(ElCascader, 'select'),
     Checkbox: ElCheckbox,
     CheckboxGroup: (props, { attrs, slots }) => {
       let defaultSlot;

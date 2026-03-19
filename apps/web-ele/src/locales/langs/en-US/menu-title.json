@@ -45,5 +45,7 @@
   "messageList": "Message List",
   "dataScreen": "Data Screen",
   "screenManagement": "Screen Management",
-  "centralBoard": "Central Board"
+  "centralBoard": "Central Board",
+  "fs": "Financial Sharing",
+  "ledger_import": "Ledger Import"
 }

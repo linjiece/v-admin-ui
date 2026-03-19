@@ -7,9 +7,23 @@
 ### 1. 前置要求
 
 - Docker Engine 20.10+
-- Docker Compose 2.0+
+- Docker Compose 2.0+ (推荐使用 `docker compose` 插件格式)
 - 至少 2GB 可用内存
 - 10GB 可用磁盘空间
+
+#### Docker Compose 版本说明
+
+从 2021 年开始，Docker 推荐使用新的 `docker compose` 插件格式（空格分隔）替代传统的 `docker-compose` 命令：
+
+```bash
+# 推荐的新格式（Docker Compose v2+）
+docker compose up -d
+
+# 传统的格式（仍然支持）
+docker-compose up -d
+```
+
+本项目已更新支持最新的 `docker compose` 格式，同时保持对传统格式的兼容性。deploy.sh 脚本会自动检测可用的 Docker Compose 版本并使用合适的命令。
 
 ### 2. 部署步骤
 
@@ -141,11 +155,14 @@ cd vue-vben-admin
 ### 查看日志
 
 ```bash
-# 查看所有服务日志
+# 查看所有服务日志（使用最新插件版本）
+docker compose logs -f
+
+# 或者使用传统版本
 docker-compose logs -f
 
 # 查看特定服务日志
-docker-compose logs -f web-ele
+docker compose logs -f web-ele
 
 # 查看Nginx访问日志
 tail -f logs/nginx/access.log
@@ -155,7 +172,7 @@ tail -f logs/nginx/access.log
 
 ```bash
 # 检查服务状态
-docker-compose ps
+docker compose ps
 
 # 健康检查curl
 curl -f http://localhost:8080/health || echo "服务异常"
@@ -288,7 +305,7 @@ docker pull nginx:stable-alpine
 
 ```bash
 # 零停机更新
-docker-compose -f docker-compose.prod.yml up -d --no-deps --build web-ele
+docker compose -f docker-compose.prod.yml up -d --no-deps --build web-ele
 ```
 
 ## 备份和恢复
@@ -333,7 +350,7 @@ cp .env.example .env.production
 vim .env.production
 
 # 使用环境变量部署
-docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 ```
 
 ## 相关命令
@@ -341,26 +358,29 @@ docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
 ### Docker Compose命令
 
 ```bash
-# 启动服务
+# 启动服务（使用最新插件版本）
+docker compose up -d
+
+# 或者使用传统版本
 docker-compose up -d
 
 # 停止服务
-docker-compose down
+docker compose down
 
 # 重启服务
-docker-compose restart
+docker compose restart
 
 # 查看状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f
 
 # 重新构建
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # 拉取镜像
-docker-compose pull
+docker compose pull
 ```
 
 ### 系统命令

@@ -66,9 +66,12 @@ check_dependencies() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-        echo -e "${RED}错误: Docker Compose 未安装${NC}"
-        exit 1
+    if docker compose version &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+        echo -e "${GREEN}✓ 使用 Docker Compose 插件${NC}"
+    else
+        DOCKER_COMPOSE_CMD="docker-compose"
+        echo -e "${GREEN}✓ 使用 Docker Compose 独立版本${NC}"
     fi
     
     echo -e "${GREEN}✓ 依赖检查通过${NC}"
@@ -120,7 +123,7 @@ select_compose_file() {
 clean_containers() {
     if [ "$CLEAN" = true ]; then
         echo -e "${BLUE}清理容器和卷...${NC}"
-        docker-compose -f "$COMPOSE_FILE" down -v --remove-orphans
+        $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down -v --remove-orphans
         docker system prune -f
         echo -e "${GREEN}✓ 清理完成${NC}"
     fi
@@ -139,11 +142,11 @@ deploy() {
     
     # 拉取最新镜像
     echo -e "${BLUE}拉取基础镜像...${NC}"
-    docker-compose -f "$COMPOSE_FILE" pull
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" pull
     
     # 构建和启动服务
     echo -e "${BLUE}构建和启动服务...${NC}"
-    docker-compose -f "$COMPOSE_FILE" up -d $BUILD_OPTS
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d $BUILD_OPTS
     
     # 等待服务启动
     echo -e "${BLUE}等待服务启动...${NC}"
@@ -151,7 +154,7 @@ deploy() {
     
     # 检查服务状态
     echo -e "${BLUE}检查服务状态...${NC}"
-    if docker-compose -f "$COMPOSE_FILE" ps | grep -q "Up"; then
+    if $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps | grep -q "Up"; then
         echo -e "${GREEN}✓ 服务启动成功${NC}"
         
         # 显示访问信息
@@ -165,12 +168,12 @@ deploy() {
         
         # 显示日志命令
         echo -e "${BLUE}查看日志:${NC}"
-        echo -e "${YELLOW}docker-compose -f $COMPOSE_FILE logs -f${NC}"
+        echo -e "${YELLOW}$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE logs -f${NC}"
         
     else
         echo -e "${RED}✗ 服务启动失败${NC}"
         echo -e "${YELLOW}查看错误日志:${NC}"
-        echo -e "${YELLOW}docker-compose -f $COMPOSE_FILE logs${NC}"
+        echo -e "${YELLOW}$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE logs${NC}"
         exit 1
     fi
 }
@@ -178,7 +181,7 @@ deploy() {
 # 显示状态
 show_status() {
     echo -e "${BLUE}服务状态:${NC}"
-    docker-compose -f "$COMPOSE_FILE" ps
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps
 }
 
 # 主函数

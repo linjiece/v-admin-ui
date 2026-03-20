@@ -5,7 +5,7 @@ import type { ExtendedMyTableApi, MyTableProps } from './types';
 import { defineComponent, h, onBeforeUnmount } from 'vue';
 
 import { MyTableApi } from './api';
-import MyTable from './MyTable.vue';
+import MyTable from './Mytable.vue';
 import { useStore } from './store';
 
 export function useMyTable<

@@ -68,6 +68,7 @@ CHANGELOG.md
 
 # 脚本
 scripts
+!scripts/deploy
 
 # 测试
 tests

@@ -15,7 +15,7 @@ import {
 } from '@element-plus/icons-vue';
 import { ElButton, ElIcon, ElTag } from 'element-plus';
 
-type StatusType =
+export type StatusType =
   | 'disabled'
   | 'draft'
   | 'error'

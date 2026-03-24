@@ -27,4 +27,9 @@ export const overridesPreferences = defineOverridesPreferences({
   theme: {
     mode: 'light',
   },
+  widget: {
+    fullscreen: false,
+    globalSearch: false,
+    languageToggle: false,
+  },
 });

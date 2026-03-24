@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { StatusType } from './modules/StatusCard.vue';
+
 import type { TaskResponse } from '#/api/fi/task';
 
 import { onMounted, reactive, ref } from 'vue';
@@ -253,9 +255,10 @@ onMounted(() => {
           v-for="item in dataList"
           :key="item.task_id"
           :data="item"
-          :status="item.status.toLowerCase()"
+          :status="item.status.toLowerCase() as StatusType"
           :title="item.task_name"
-          :description="item.task_name"
+          :subtitle="item.task_id"
+          :description="item.biz_info.orgName"
           :time="item.created_at"
           @detail="handleEdit(item)"
           @delete="handleDelete(item)"

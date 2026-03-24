@@ -13,7 +13,7 @@ import {
   Play,
 } from '@vben/icons';
 
-import { ElButton, ElCard, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElCard, ElIcon, ElMessage, ElTag } from 'element-plus';
 
 import { createWebSocket } from '#/api/core/websocket';
 import { executeTask, getTask, getTaskDAG } from '#/api/fi/task';
@@ -42,7 +42,7 @@ const taskName = ref('');
 let wsManager: null | ReturnType<typeof createWebSocket> = null;
 
 const orderedNodes = computed(() => {
-  return [...dagNodes.value].sort(
+  return [...dagNodes.value].toSorted(
     (a, b) => a.layer - b.layer || a.step_code.localeCompare(b.step_code),
   );
 });
@@ -208,14 +208,14 @@ onUnmounted(() => {
     <ElCard shadow="never" class="task-panel">
       <div class="header-actions">
         <ElButton type="primary" text icon="" @click="goBack">
-          <el-icon><ArrowLeft /></el-icon>
+          <ElIcon><ArrowLeft /></ElIcon>
           返回父级菜单
         </ElButton>
 
         <div class="header-right-actions">
           <span class="status-chip">{{ taskName }}</span>
           <ElButton type="success" icon="" @click="confirmTask">
-            <el-icon><Check /></el-icon>
+            <ElIcon><Check /></ElIcon>
             确认
           </ElButton>
         </div>
@@ -236,7 +236,7 @@ onUnmounted(() => {
               </ElTag>
             </div>
             <div v-if="index < orderedNodes.length - 1" class="arrow-icon">
-              <el-icon><ArrowRightToLine /></el-icon>
+              <ElIcon><ArrowRightToLine /></ElIcon>
             </div>
           </div>
         </div>
@@ -246,7 +246,7 @@ onUnmounted(() => {
         <div class="log-header">
           <span>日志输出</span>
           <ElButton type="text" size="small" icon="" @click="refreshLogs">
-            <el-icon><ElRefresh /></el-icon>
+            <ElIcon><ElRefresh /></ElIcon>
             刷新
           </ElButton>
           <ElTag size="small" type="success">WS {{ wsStatus }}</ElTag>
@@ -268,7 +268,7 @@ onUnmounted(() => {
           @click="startExecution"
           :disabled="isExecuting"
         >
-          <el-icon><Play /></el-icon>
+          <ElIcon><Play /></ElIcon>
           执行
         </ElButton>
       </div>

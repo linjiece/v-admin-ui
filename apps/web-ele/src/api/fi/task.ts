@@ -91,6 +91,7 @@ export interface TaskResponse {
   task_type: string;
   task_name: string;
   biz_id: string;
+  biz_info: Record<string, any>;
   status: string;
   total_steps: number;
   success_steps: number;

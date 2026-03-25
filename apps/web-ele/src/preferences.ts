@@ -31,5 +31,6 @@ export const overridesPreferences = defineOverridesPreferences({
     fullscreen: false,
     globalSearch: false,
     languageToggle: false,
+    lockScreen: false,
   },
 });

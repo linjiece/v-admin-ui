@@ -185,7 +185,7 @@ curl -f http://localhost:8080/health || echo "服务异常"
 docker stats
 
 # 查看容器详情
-docker inspect vben-web-ele
+docker inspect v-app-ui
 ```
 
 ## 故障排除
@@ -229,13 +229,13 @@ docker inspect vben-web-ele
 
 ```bash
 # 进入容器调试
-docker exec -it vben-web-ele /bin/sh
+docker exec -it v-app-ui /bin/sh
 
 # 查看容器环境变量
-docker exec vben-web-ele env
+docker exec v-app-ui env
 
 # 测试网络连接
-docker exec vben-web-ele wget -O- http://localhost:8080
+docker exec v-app-ui wget -O- http://localhost:8080
 ```
 
 ## 性能优化
@@ -394,10 +394,10 @@ docker system info
 docker system prune -a
 
 # 查看容器日志
-docker logs -f vben-web-ele
+docker logs -f v-app-ui
 
 # 进入容器
-docker exec -it vben-web-ele /bin/sh
+docker exec -it v-app-ui /bin/sh
 ```
 
 ## 获取更多帮助
@@ -579,7 +579,7 @@ curl -f http://localhost:8080/health || echo "服务异常"
 docker stats
 
 # 查看容器详情
-docker inspect vben-web-ele
+docker inspect v-app-ui
 ```
 
 ## 故障排除
@@ -623,13 +623,13 @@ docker inspect vben-web-ele
 
 ```bash
 # 进入容器调试
-docker exec -it vben-web-ele /bin/sh
+docker exec -it v-app-ui /bin/sh
 
 # 查看容器环境变量
-docker exec vben-web-ele env
+docker exec v-app-ui env
 
 # 测试网络连接
-docker exec vben-web-ele wget -O- http://localhost:8080
+docker exec v-app-ui wget -O- http://localhost:8080
 ```
 
 ## 性能优化
@@ -785,10 +785,10 @@ docker system info
 docker system prune -a
 
 # 查看容器日志
-docker logs -f vben-web-ele
+docker logs -f v-app-ui
 
 # 进入容器
-docker exec -it vben-web-ele /bin/sh
+docker exec -it v-app-ui /bin/sh
 ```
 
 ## 获取更多帮助

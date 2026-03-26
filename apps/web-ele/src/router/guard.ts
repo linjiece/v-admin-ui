@@ -50,15 +50,6 @@ function setupAccessGuard(router: Router) {
     const userStore = useUserStore();
     const authStore = useAuthStore();
 
-    console.log(
-      '当前路径:',
-      to.path,
-      '完整路径:',
-      to.fullPath,
-      '路由名称:',
-      to.name,
-    );
-    console.log(coreRouteNames);
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
       if (to.path === LOGIN_PATH && accessStore.accessToken) {

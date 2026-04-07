@@ -139,12 +139,6 @@ async function loadCardList() {
       const newEndIndex = pagination.pageSize;
       dataList.value = allData.slice(newStartIndex, newEndIndex);
     }
-    console.log(
-      '卡片列表加载成功:',
-      dataList.value.length,
-      '条数据，总计:',
-      pagination.total,
-    );
   } catch (error) {
     console.error('加载卡片列表失败:', error);
     ElMessage.error('加载卡片列表失败，请稍后重试');

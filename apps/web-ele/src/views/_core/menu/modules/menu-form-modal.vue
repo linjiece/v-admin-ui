@@ -6,7 +6,6 @@ import type { Menu } from '#/api/core/menu';
 
 import { computed, h, ref } from 'vue';
 
-import { IconifyIcon } from '@vben/icons';
 import { $t, $te } from '@vben/locales';
 import { getPopupContainer } from '@vben/utils';
 
@@ -125,12 +124,9 @@ const schema = computed((): VbenFormSchema[] => [
     label: $t('menu.parent'),
     renderComponentContent() {
       return {
-        title({ label, meta }: { label: string; meta: Recordable<any> }) {
+        title({ label }: { label: string; meta: Recordable<any> }) {
           const coms = [];
           if (!label) return '';
-          if (meta?.icon) {
-            coms.push(h(IconifyIcon, { class: 'size-4', icon: meta.icon }));
-          }
           coms.push(h('span', { class: '' }, label));
           return h('div', { class: 'flex items-center gap-1' }, coms);
         },
@@ -175,14 +171,6 @@ const schema = computed((): VbenFormSchema[] => [
         append: () => titleSuffix.value || '',
       };
     },
-  },
-  {
-    component: 'IconPicker',
-    componentProps: {
-      prefix: 'lucide',
-    },
-    fieldName: 'icon',
-    label: $t('menu.icon'),
   },
   {
     component: 'Input',
@@ -265,7 +253,6 @@ async function onSubmit() {
         path: data.path!,
         parent_id: data.parent_id,
         title: data.title,
-        icon: data.icon,
         order: 0,
       };
 

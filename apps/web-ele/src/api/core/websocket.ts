@@ -390,6 +390,15 @@ export function createDatabaseMonitorWebSocket(
   return createWebSocket('/ws/database-monitor/', callbacks);
 }
 
+export function createLedgerImportWebSocket(
+  taskId: string,
+  callbacks?: WebSocketApi.WebSocketCallbacks,
+): WebSocketManager {
+  return createWebSocket(
+    `/ws/ledger_import?task_id=${encodeURIComponent(taskId)}`,
+    callbacks,
+  );
+}
 /**
  * 监控WebSocket管理器类
  */

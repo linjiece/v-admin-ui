@@ -4,19 +4,22 @@ import type { WebSocketApi } from '#/api/core/websocket';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { Page } from '@vben/common-ui';
 import {
   ArrowLeft,
-  ArrowRightToLine,
   Check,
-  ElRefresh,
-  Play,
+  CheckCircle,
+  ChevronRight,
+  Circle,
+  FileText,
+  Loader,
+  Terminal,
+  X,
 } from '@vben/icons';
 
-import { ElButton, ElCard, ElIcon, ElMessage, ElTag } from 'element-plus';
+import { ElBadge, ElButton, ElCard, ElMessage } from 'element-plus';
 
-import { createWebSocket } from '#/api/core/websocket';
-import { executeTask, getTask, getTaskDAG } from '#/api/fi/task';
+import { createLedgerImportWebSocket } from '#/api/core/websocket';
+import { confirmTaskApi, getTask, getTaskDAG } from '#/api/fi/task';
 
 interface TaskDAGNode {
   step_code: string;
@@ -26,6 +29,11 @@ interface TaskDAGNode {
   prev: string[];
   next: string[];
 }
+interface LogEntry {
+  time: string;
+  level: 'ERROR' | 'INFO' | 'SUCCESS' | 'WARN';
+  message: string;
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -33,13 +41,25 @@ const router = useRouter();
 const taskId = String(route.params.taskId ?? '');
 
 const dagNodes = ref<TaskDAGNode[]>([]);
-const logRows = ref<string[]>([]);
+const logRows = ref<LogEntry[]>([]);
 const wsStatus = ref<'CLOSED' | 'CLOSING' | 'CONNECTING' | 'OPEN'>('CLOSED');
 const isExecuting = ref(false);
 const isLoading = ref(false);
 const taskName = ref('');
+const taskStatus = ref<string>('INIT');
+const logContainer = ref<HTMLElement>();
 
-let wsManager: null | ReturnType<typeof createWebSocket> = null;
+const canConfirm = computed(() => taskStatus.value === 'INIT');
+const canExecute = computed(() => taskStatus.value === 'PENDING');
+const isRunning = computed(
+  () => taskStatus.value === 'RUNNING' || isExecuting.value,
+);
+
+let wsManager: null | ReturnType<typeof createLedgerImportWebSocket> = null;
+let pollingTimer: null | ReturnType<typeof setInterval> = null;
+let pollingTimeout: null | ReturnType<typeof setTimeout> = null;
+const POLLING_INTERVAL = 1000;
+const POLLING_TIMEOUT = 600_000;
 
 const orderedNodes = computed(() => {
   return [...dagNodes.value].toSorted(
@@ -47,14 +67,11 @@ const orderedNodes = computed(() => {
   );
 });
 
-function appendLog(message: string) {
-  const formatted = `${new Date().toLocaleTimeString()} - ${message}`;
-  logRows.value.push(formatted);
-  // 最多保留1000行
+function appendLog(log: LogEntry) {
+  logRows.value.push(log);
   if (logRows.value.length > 1000) {
     logRows.value.splice(0, logRows.value.length - 1000);
   }
-  // 下拉到最新
   setTimeout(() => {
     const logArea = document.querySelector('#task-log-output');
     if (logArea) {
@@ -68,6 +85,7 @@ async function loadTaskInfo() {
   try {
     const task = await getTask(taskId);
     taskName.value = task.task_name || `任务 ${taskId}`;
+    taskStatus.value = task.status;
   } catch (error) {
     console.warn('无法获取任务信息', error);
     taskName.value = `任务 ${taskId}`;
@@ -93,27 +111,77 @@ async function loadDAG() {
   }
 }
 
-function statusColor(status: string) {
-  const mapping: Record<string, string> = {
-    SUCCESS: 'success',
-    RUNNING: 'warning',
-    PENDING: 'info',
-    FAILED: 'danger',
-    CANCELLED: 'info',
-  };
-  return mapping[status.toUpperCase()] ?? 'info';
+async function pollTaskStatus() {
+  try {
+    const task = await getTask(taskId);
+    const dag = await getTaskDAG(taskId);
+
+    taskStatus.value = task.status;
+    dagNodes.value = dag.nodes.map((node) => ({
+      step_code: node.step_code,
+      step_name: node.step_name,
+      layer: node.layer,
+      status: node.status,
+      prev: node.prev || [],
+      next: node.next || [],
+    }));
+
+    if (task.status === 'SUCCESS' || task.status === 'FAILED') {
+      stopPolling('Task completed');
+    }
+  } catch (error) {
+    console.error('轮询任务状态失败', error);
+  }
+}
+
+function startPolling() {
+  stopPolling();
+  pollingTimeout = setTimeout(() => {
+    stopPolling('Polling timeout');
+  }, POLLING_TIMEOUT);
+  pollingTimer = setInterval(pollTaskStatus, POLLING_INTERVAL);
+  pollTaskStatus();
+}
+
+function stopPolling(reason?: string) {
+  if (pollingTimer) {
+    clearInterval(pollingTimer);
+    pollingTimer = null;
+  }
+  if (pollingTimeout) {
+    clearTimeout(pollingTimeout);
+    pollingTimeout = null;
+  }
+  isExecuting.value = false;
+  if (wsManager && wsManager.isConnected) {
+    wsManager.send({ type: 'stop' });
+  }
+  if (reason) {
+    appendLog({
+      time: new Date().toLocaleTimeString(),
+      level: 'INFO',
+      message: `轮询结束: ${reason}`,
+    });
+  }
 }
 
 function goBack() {
   if (window.history.length > 1) {
     router.back();
   } else {
-    router.push('/fi');
+    router.push('/ops/ledger_import');
   }
 }
 
-function confirmTask() {
-  ElMessage.success('已确认工作流信息');
+async function confirmTask() {
+  try {
+    const task = await confirmTaskApi(taskId);
+    taskStatus.value = task.status;
+    ElMessage.success('已确认工作流信息');
+  } catch (error) {
+    console.error('确认工作流失败', error);
+    ElMessage.error('确认工作流失败，请重试');
+  }
 }
 
 function createTaskLogSocket() {
@@ -122,36 +190,59 @@ function createTaskLogSocket() {
   }
 
   wsStatus.value = 'CONNECTING';
-  wsManager = createWebSocket(
-    `/ws/fi/task/${encodeURIComponent(taskId)}/logs`,
-    {
-      onOpen: () => {
-        wsStatus.value = 'OPEN';
-        appendLog('已连接到任务日志 WebSocket');
-      },
-      onMessage: (message: WebSocketApi.WebSocketMessage) => {
-        const content =
-          message.content ?? message.data ?? JSON.stringify(message);
-        appendLog(String(content));
-      },
-      onError: (event) => {
-        appendLog(`WebSocket 错误: ${event?.type ?? ''}`);
-        wsStatus.value = 'CLOSED';
-      },
-      onClose: () => {
-        appendLog('WebSocket 已关闭');
-        wsStatus.value = 'CLOSED';
-      },
-      onReconnect: (attempt) => {
-        appendLog(`WebSocket 重连中，第 ${attempt} 次`);
-        wsStatus.value = 'CONNECTING';
-      },
+  wsManager = createLedgerImportWebSocket(taskId, {
+    onOpen: () => {
+      wsStatus.value = 'OPEN';
+      appendLog({
+        time: new Date().toLocaleTimeString(),
+        level: 'INFO',
+        message: '已连接到任务日志 WebSocket',
+      });
     },
-  );
+    onMessage: (message: WebSocketApi.WebSocketMessage) => {
+      const content =
+        message.content ?? message.data ?? JSON.stringify(message);
+      appendLog({
+        time: new Date().toLocaleTimeString(),
+        level: 'INFO',
+        message: content,
+      });
+    },
+    onError: (event) => {
+      appendLog({
+        time: new Date().toLocaleTimeString(),
+        level: 'ERROR',
+        message: `WebSocket 错误: ${event?.type ?? ''}`,
+      });
+      isExecuting.value = false;
+      closeWebSocket();
+    },
+    onClose: () => {
+      appendLog({
+        time: new Date().toLocaleTimeString(),
+        level: 'INFO',
+        message: 'WebSocket 已关闭',
+      });
+      isExecuting.value = false;
+      closeWebSocket();
+    },
+    onReconnect: (attempt) => {
+      appendLog({
+        time: new Date().toLocaleTimeString(),
+        level: 'INFO',
+        message: `WebSocket 重连中，第 ${attempt} 次`,
+      });
+      wsStatus.value = 'CONNECTING';
+    },
+  });
 
   wsManager.connect().catch((error) => {
     wsStatus.value = 'CLOSED';
-    appendLog(`WebSocket 连接失败：${error?.message ?? error}`);
+    appendLog({
+      time: new Date().toLocaleTimeString(),
+      level: 'ERROR',
+      message: `WebSocket 连接失败：${error?.message ?? error}`,
+    });
   });
 }
 
@@ -161,31 +252,45 @@ async function startExecution() {
   }
 
   isExecuting.value = true;
-  appendLog('开始执行工作流...');
 
   try {
-    createTaskLogSocket();
-    const resp = await executeTask(taskId);
-    appendLog(`执行接口响应: ${JSON.stringify(resp)}`);
+    if (!wsManager || !wsManager.isConnected) {
+      createTaskLogSocket();
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('WebSocket 连接超时'));
+        }, 10_000);
+
+        const originalOnOpen = wsManager?.callbacks.onOpen;
+        wsManager!.callbacks.onOpen = (event) => {
+          originalOnOpen?.(event);
+          clearTimeout(timeout);
+          resolve();
+        };
+      });
+    }
+
+    wsManager.send({ type: 'start' });
+    startPolling();
   } catch (error) {
     console.error('执行失败', error);
-    appendLog(`执行失败: ${error?.message ?? error}`);
+    appendLog({
+      time: new Date().toLocaleTimeString(),
+      level: 'ERROR',
+      message: `执行失败: ${error?.message ?? error}`,
+    });
     ElMessage.error('执行失败，请重试');
-  } finally {
     isExecuting.value = false;
   }
 }
 
 function closeWebSocket() {
+  stopPolling();
   if (wsManager) {
     wsManager.close();
     wsManager = null;
   }
   wsStatus.value = 'CLOSED';
-}
-
-function refreshLogs() {
-  appendLog('手动刷新日志');
 }
 
 onMounted(() => {
@@ -204,190 +309,194 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Page>
-    <ElCard shadow="never" class="task-panel">
-      <div class="header-actions">
-        <ElButton type="primary" text icon="" @click="goBack">
-          <ElIcon><ArrowLeft /></ElIcon>
-          返回父级菜单
+  <div class="flex min-h-screen flex-col bg-gray-50/50">
+    <header
+      class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200/80 bg-white/80 px-6 py-4 backdrop-blur-sm"
+    >
+      <div class="flex items-center gap-3">
+        <ElButton
+          variant="text"
+          class="!text-gray-600 hover:!bg-gray-100"
+          @click="goBack"
+        >
+          <ArrowLeft class="h-4 w-4" />
         </ElButton>
-
-        <div class="header-right-actions">
-          <span class="status-chip">{{ taskName }}</span>
-          <ElButton type="success" icon="" @click="confirmTask">
-            <ElIcon><Check /></ElIcon>
-            确认
-          </ElButton>
+        <div class="flex flex-col">
+          <span class="font-medium text-gray-900">{{ taskName }}</span>
+          <span class="text-xs text-gray-400">任务ID: {{ taskId }}</span>
         </div>
       </div>
+      <div class="flex items-center gap-2">
+        <ElButton
+          :disabled="!canConfirm"
+          class="border-gray-300"
+          @click="confirmTask"
+        >
+          <CheckCircle class="h-4 w-4" />
+          确认
+        </ElButton>
+        <ElButton
+          v-if="!isRunning"
+          :disabled="!canExecute"
+          type="primary"
+          class="!bg-gray-900 hover:!bg-gray-800"
+          @click="startExecution"
+        >
+          <Terminal class="h-4 w-4" />
+          执行工作流
+        </ElButton>
+        <ElButton v-else type="info" disabled>
+          <Loader class="h-4 w-4 animate-spin" />
+          执行中...
+        </ElButton>
+      </div>
+    </header>
 
-      <div class="workflow-section">
-        <div class="workflow-title">工作流节点</div>
-        <div class="workflow-bar">
-          <div
-            v-for="(node, index) in orderedNodes"
-            :key="node.step_code"
-            class="workflow-node"
-          >
-            <div class="workflow-node-body">
-              <div class="node-name">{{ node.step_name }}</div>
-              <ElTag :type="statusColor(node.status)">
-                {{ node.status }}
-              </ElTag>
+    <main class="flex flex-1 gap-6 overflow-hidden p-6">
+      <div class="flex min-w-0 flex-1 flex-col gap-6">
+        <ElCard class="border-0 bg-white shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2">
+              <FileText class="h-4 w-4 text-gray-400" />
+              <span class="text-sm font-medium text-gray-700">工作流节点</span>
             </div>
-            <div v-if="index < orderedNodes.length - 1" class="arrow-icon">
-              <ElIcon><ArrowRightToLine /></ElIcon>
+          </template>
+          <div class="flex items-center justify-center gap-2 py-3">
+            <template
+              v-for="(node, index) in orderedNodes"
+              :key="node.step_code"
+            >
+              <div class="flex flex-col items-center gap-2">
+                <div
+                  class="flex h-12 w-12 items-center justify-center rounded-xl border-2 bg-white shadow-sm transition-all duration-300"
+                  :class="[
+                    node.status === 'SUCCESS' && 'border-green-400 bg-green-50',
+                    node.status === 'RUNNING' &&
+                      'animate-pulse border-blue-400 bg-blue-50',
+                    node.status === 'FAILED' && 'border-red-400 bg-red-50',
+                    node.status === 'PENDING' && 'border-gray-200',
+                  ]"
+                >
+                  <Check
+                    v-if="node.status === 'SUCCESS'"
+                    class="h-5 w-5 text-green-500"
+                  />
+                  <Loader
+                    v-else-if="node.status === 'RUNNING'"
+                    class="h-5 w-5 animate-spin text-blue-500"
+                  />
+                  <X
+                    v-else-if="node.status === 'FAILED'"
+                    class="h-5 w-5 text-red-500"
+                  />
+                  <Circle v-else class="h-5 w-5 text-gray-300" />
+                </div>
+                <span
+                  class="text-xs font-medium"
+                  :class="[
+                    node.status === 'SUCCESS' && 'text-green-600',
+                    node.status === 'RUNNING' && 'text-blue-600',
+                    node.status === 'FAILED' && 'text-red-600',
+                    node.status === 'PENDING' && 'text-gray-400',
+                  ]"
+                >
+                  {{ node.step_name }}
+                </span>
+              </div>
+              <div
+                v-if="index < orderedNodes.length - 1"
+                class="mb-6 flex items-center"
+              >
+                <div
+                  class="h-0.5 w-8 transition-colors duration-300"
+                  :class="
+                    node.status === 'SUCCESS' ? 'bg-green-400' : 'bg-gray-200'
+                  "
+                ></div>
+                <ChevronRight
+                  class="h-3 w-3"
+                  :class="
+                    node.status === 'SUCCESS'
+                      ? 'text-green-400'
+                      : 'text-gray-300'
+                  "
+                />
+              </div>
+            </template>
+          </div>
+        </ElCard>
+
+        <ElCard class="flex flex-1 flex-col border-0 bg-white shadow-sm">
+          <template #header>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <Terminal class="h-4 w-4 text-gray-400" />
+                <span class="text-sm font-medium text-gray-700">执行日志</span>
+                <ElBadge
+                  v-if="isExecuting"
+                  is-dot
+                  type="primary"
+                  class="ml-1"
+                />
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs"
+                  :class="[
+                    wsStatus === 'OPEN' && 'text-green-500',
+                    wsStatus === 'CONNECTING' && 'text-yellow-500',
+                    wsStatus === 'CLOSED' && 'text-gray-400',
+                  ]"
+                >
+                  {{
+                    wsStatus === 'OPEN'
+                      ? '已连接'
+                      : wsStatus === 'CONNECTING'
+                        ? '连接中...'
+                        : '未连接'
+                  }}
+                </span>
+              </div>
+            </div>
+          </template>
+          <div
+            id="task-log-output"
+            ref="logContainer"
+            class="flex-1 space-y-1 overflow-y-auto bg-gray-50/50 p-4 font-mono text-xs"
+          >
+            <div
+              v-for="(log, index) in logRows"
+              :key="index"
+              class="flex items-start gap-3 rounded px-2 py-1.5 transition-colors hover:bg-white/80"
+            >
+              <span class="whitespace-nowrap text-gray-400">
+                {{ log.time }}
+              </span>
+              <span
+                class="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium"
+                :class="[
+                  log.level === 'ERROR' && 'bg-red-100 text-red-600',
+                  log.level === 'WARN' && 'bg-yellow-100 text-yellow-600',
+                  log.level === 'SUCCESS' && 'bg-green-100 text-green-600',
+                  log.level === 'INFO' && 'bg-blue-100 text-blue-600',
+                ]"
+              >
+                {{ log.level }}
+              </span>
+              <span class="flex-1 break-all text-gray-600">
+                {{ log.message }}
+              </span>
+            </div>
+            <div
+              v-if="logRows.length === 0"
+              class="flex h-full flex-col items-center justify-center text-gray-400"
+            >
+              <FileText class="mb-3 h-10 w-10 opacity-20" />
+              <p class="text-sm">暂无日志输出</p>
             </div>
           </div>
-        </div>
+        </ElCard>
       </div>
-
-      <div class="log-section">
-        <div class="log-header">
-          <span>日志输出</span>
-          <ElButton type="text" size="small" icon="" @click="refreshLogs">
-            <ElIcon><ElRefresh /></ElIcon>
-            刷新
-          </ElButton>
-          <ElTag size="small" type="success">WS {{ wsStatus }}</ElTag>
-        </div>
-        <pre id="task-log-output" class="log-content">{{
-          logRows.join('\n') || '暂无日志'
-        }}</pre>
-      </div>
-
-      <div class="footer-actions">
-        <div class="run-status">
-          <ElTag type="info" size="small">
-            执行状态: {{ isExecuting ? '执行中' : '空闲' }}
-          </ElTag>
-        </div>
-        <ElButton
-          type="primary"
-          icon=""
-          @click="startExecution"
-          :disabled="isExecuting"
-        >
-          <ElIcon><Play /></ElIcon>
-          执行
-        </ElButton>
-      </div>
-    </ElCard>
-  </Page>
+    </main>
+  </div>
 </template>
-
-<style scoped>
-.task-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-height: 75vh;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-right-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.status-chip {
-  margin-right: 12px;
-  font-weight: 600;
-}
-
-.workflow-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.workflow-title {
-  font-weight: 600;
-}
-
-.workflow-bar {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  overflow-x: auto;
-  background-color: #fff;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
-}
-
-.workflow-node {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.workflow-node-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 120px;
-  padding: 10px;
-  text-align: center;
-  background: var(--el-color-white);
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
-}
-
-.node-name {
-  margin-bottom: 6px;
-  font-weight: bold;
-}
-
-.arrow-icon {
-  display: flex;
-  align-items: center;
-  padding: 0 4px;
-}
-
-.log-section {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 350px;
-}
-
-.log-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: bold;
-}
-
-.log-content {
-  flex: 1;
-  min-height: 300px;
-  padding: 12px;
-  margin: 0;
-  overflow-y: auto;
-  color: #e5e5e5;
-  word-break: break-word;
-  white-space: pre-wrap;
-  background: #121212;
-  border-radius: 6px;
-}
-
-.footer-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.run-status {
-  display: flex;
-  align-items: center;
-}
-</style>

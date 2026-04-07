@@ -163,6 +163,10 @@ export async function getTask(taskId: string): Promise<TaskResponse> {
   return requestClient.get<TaskResponse>(`/api/fi/task/${taskId}`);
 }
 
+export async function confirmTask(taskId: string): Promise<TaskResponse> {
+  return requestClient.get<TaskResponse>(`/api/fi/task/${taskId}/confirm`);
+}
+
 export async function createTask(data: TaskCreate): Promise<TaskResponse> {
   return requestClient.post<TaskResponse>('/api/fi/task/create', data);
 }

@@ -19,7 +19,7 @@ import {
 import { ElBadge, ElButton, ElCard, ElMessage } from 'element-plus';
 
 import { createLedgerImportWebSocket } from '#/api/core/websocket';
-import { confirmTaskApi, getTask, getTaskDAG } from '#/api/fi/task';
+import { confirmTask, getTask, getTaskDAG } from '#/api/fi/task';
 
 interface TaskDAGNode {
   step_code: string;
@@ -173,9 +173,9 @@ function goBack() {
   }
 }
 
-async function confirmTask() {
+async function confirmWorkflow(taskId: string) {
   try {
-    const task = await confirmTaskApi(taskId);
+    const task = await confirmTask(taskId);
     taskStatus.value = task.status;
     ElMessage.success('已确认工作流信息');
   } catch (error) {
@@ -330,7 +330,7 @@ onUnmounted(() => {
         <ElButton
           :disabled="!canConfirm"
           class="border-gray-300"
-          @click="confirmTask"
+          @click="confirmWorkflow(taskId)"
         >
           <CheckCircle class="h-4 w-4" />
           确认

@@ -14,12 +14,14 @@ import {
   ElCard,
   ElEmpty,
   ElMessage,
+  ElOption,
   ElPagination,
+  ElSelect,
 } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
 import { fetchOrgApi } from '#/api/fi/org';
-import { createTask, getPendingTasks } from '#/api/fi/task';
+import { createTask, getTasks, TaskStatus } from '#/api/fi/task';
 
 import { getCascaderOptions } from './data';
 import StatusCard from './modules/StatusCard.vue';
@@ -99,6 +101,29 @@ const [Form, formApi] = useVbenForm({
       componentProps: { disabled: true },
       rules: 'required',
     },
+    {
+      fieldName: 'financeManager',
+      label: '财务主管',
+      component: 'Input',
+      rules: 'required',
+    },
+    {
+      fieldName: 'enableLedger',
+      label: '启用核算账簿',
+      component: 'Switch',
+      componentProps: {
+        activeValue: true,
+        inactiveValue: false,
+      },
+      defaultValue: false,
+      dependencies: {
+        triggerFields: ['companyCode'],
+        show: (values) => {
+          return values.companyCode?.[0] === '四航局';
+        },
+      },
+      help: '如果该行政组织关联的核算账簿为新的，请选择启用核算账簿；如果该行政组织关联旧核算账簿，无需启用核算账簿',
+    },
   ],
   handleSubmit: handleSave,
 });
@@ -112,12 +137,15 @@ const pagination = reactive({
   pageSize: 10,
 });
 
+const selectedStatus = ref<TaskStatus>(TaskStatus.INIT);
+
 // 加载卡片列表
-async function loadCardList() {
+async function loadCardList(status?: TaskStatus) {
   try {
     loading.value = true;
+    const filterStatus = status ?? selectedStatus.value;
     // 调用API获取数据
-    const response = await getPendingTasks();
+    const response = await getTasks(filterStatus);
     // 检查返回数据
     if (!response || !Array.isArray(response)) {
       console.warn('API返回数据格式不正确:', response);
@@ -186,6 +214,8 @@ async function handleSave() {
     task_name: '账套纳入',
     task_type: 'ledger_import',
     biz_info: {
+      companyCode: values.companyCode,
+      enableLedger: values.enableLedger,
       orgId: values.orgId,
       orgCode: values.orgCode,
       orgName: values.orgName,
@@ -236,7 +266,27 @@ onMounted(() => {
       <template #header>
         <div class="card-header-title">
           <span>编排计划单</span>
-          <ElButton :icon="Refresh" circle size="small" @click="loadCardList" />
+          <div class="card-header-actions">
+            <ElSelect
+              v-model="selectedStatus"
+              placeholder="选择状态"
+              size="small"
+              @change="loadCardList"
+            >
+              <ElOption label="初始化" :value="TaskStatus.INIT" />
+              <ElOption label="待处理" :value="TaskStatus.PENDING" />
+              <ElOption label="运行中" :value="TaskStatus.RUNNING" />
+              <ElOption label="成功" :value="TaskStatus.SUCCESS" />
+              <ElOption label="失败" :value="TaskStatus.FAILED" />
+              <ElOption label="已取消" :value="TaskStatus.CANCELLED" />
+            </ElSelect>
+            <ElButton
+              :icon="Refresh"
+              circle
+              size="small"
+              @click="() => loadCardList(selectedStatus)"
+            />
+          </div>
         </div>
       </template>
 
@@ -253,6 +303,7 @@ onMounted(() => {
           :title="item.task_name"
           :subtitle="item.task_id"
           :description="item.biz_info.orgName"
+          :tag="item.biz_info.companyCode"
           :time="item.created_at"
           @detail="handleEdit(item)"
           @delete="handleDelete(item)"
@@ -324,6 +375,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.card-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .empty-state {

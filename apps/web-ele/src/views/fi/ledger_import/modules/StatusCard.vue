@@ -17,9 +17,9 @@ import { ElButton, ElIcon, ElTag } from 'element-plus';
 
 export type StatusType =
   | 'disabled'
-  | 'draft'
   | 'error'
   | 'failed'
+  | 'init'
   | 'pending'
   | 'published'
   | 'running'
@@ -32,16 +32,16 @@ interface Props {
   description?: string;
   status?: StatusType;
   type?: string;
-  category?: string;
+  tag?: string[];
   time?: string;
   isHovered?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   description: '',
-  status: 'draft',
+  status: 'init',
   type: '',
-  category: '主应用',
+  tag: () => ['主应用'],
   time: '',
   isHovered: false,
 });
@@ -137,9 +137,9 @@ const statusConfig: Record<
     icon: Timer,
   },
 
-  // 草稿状态 - 灰色
-  draft: {
-    text: '草稿',
+  // 初始化状态 - 灰色
+  init: {
+    text: '初始',
     type: 'info',
     color: '#909399',
     bgColor: '#f4f4f5',
@@ -149,7 +149,7 @@ const statusConfig: Record<
 };
 
 const currentStatus = computed(
-  () => statusConfig[props.status] || statusConfig.draft,
+  () => statusConfig[props.status] || statusConfig.init,
 );
 
 const statusText = computed(() => currentStatus.value.text);
@@ -232,8 +232,16 @@ const handleMore = () => emit('more');
         <ElTag v-if="type" type="info" size="small" effect="plain">
           {{ type }}
         </ElTag>
+        <ElTag
+          v-for="(item, index) in tag"
+          :key="index"
+          type="info"
+          size="small"
+          effect="plain"
+        >
+          {{ item }}
+        </ElTag>
       </div>
-      <span class="app-card__category">{{ category }}</span>
     </div>
 
     <!-- 时间 -->
@@ -351,6 +359,12 @@ const handleMore = () => emit('more');
   &__tags {
     display: flex;
     gap: 8px;
+  }
+
+  &__tags-right {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
   }
 
   &__category {

@@ -322,9 +322,10 @@ export function createWebSocket(
   let wsUrl: string;
 
   if (import.meta.env.DEV) {
-    // 开发环境：直接连接到后端服务器
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    wsUrl = `${wsProtocol}//localhost:8000${endpoint}`;
+    const apiUrl = import.meta.env.VITE_GLOB_API_URL as string;
+    const urlObj = new URL(apiUrl);
+    wsUrl = `${wsProtocol}//${urlObj.host}${endpoint}`;
   } else {
     // 生产环境：使用当前域名
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';

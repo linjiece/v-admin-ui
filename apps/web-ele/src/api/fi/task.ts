@@ -1,9 +1,11 @@
 import { requestClient } from '#/api/request';
 
 // ==================== Enums ====================
+// 在TaskStatus枚举中添加INIT状态，与前端状态保持一致
 export enum TaskStatus {
   CANCELLED = 'CANCELLED',
   FAILED = 'FAILED',
+  INIT = 'INIT', // 初始化状态
   PENDING = 'PENDING',
   RUNNING = 'RUNNING',
   SUCCESS = 'SUCCESS',
@@ -149,8 +151,12 @@ export interface TaskDAGResponse {
 }
 
 // ==================== API Functions ====================
-export async function getPendingTasks(): Promise<TaskResponse[]> {
-  return requestClient.get<TaskResponse[]>('/api/fi/task/pending');
+export async function getInitialTasks(): Promise<TaskResponse[]> {
+  return requestClient.get<TaskResponse[]>('/api/fi/task?status=init');
+}
+
+export async function getTasks(status: string): Promise<TaskResponse[]> {
+  return requestClient.get<TaskResponse[]>(`/api/fi/task?status=${status}`);
 }
 
 export async function getTaskList(

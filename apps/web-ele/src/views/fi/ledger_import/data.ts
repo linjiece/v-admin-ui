@@ -37,6 +37,10 @@ export function getCascaderOptions() {
           value: '八公司',
           label: '八公司',
         },
+        {
+          value: '总承包',
+          label: '总承包',
+        },
       ],
     },
     {

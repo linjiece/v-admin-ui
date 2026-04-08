@@ -319,20 +319,11 @@ export function createWebSocket(
   callbacks?: WebSocketApi.WebSocketCallbacks,
 ): WebSocketManager {
   // 构建WebSocket URL
-  let wsUrl: string;
 
-  if (import.meta.env.DEV) {
-    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const apiUrl = import.meta.env.VITE_GLOB_API_URL as string;
-    const urlObj = new URL(apiUrl);
-    wsUrl = `${wsProtocol}//${urlObj.host}${endpoint}`;
-  } else {
-    // 生产环境：使用当前域名
-    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = location.host;
-    wsUrl = `${wsProtocol}//${wsHost}${endpoint}`;
-    // wsUrl = `${wsProtocol}//116.204.90.201:8000${endpoint}`;
-  }
+  const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const apiUrl = import.meta.env.VITE_GLOB_API_URL as string;
+  const urlObj = new URL(apiUrl);
+  const wsUrl = `${wsProtocol}//${urlObj.host}${endpoint}`;
 
   const config: WebSocketApi.WebSocketConfig = {
     url: wsUrl,

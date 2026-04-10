@@ -1,0 +1,21 @@
+{
+  "org": {
+    "title": "Organization",
+    "orgCode": "Organization Code",
+    "orgCodePlaceholder": "Please enter organization code",
+    "orgName": "Organization Name",
+    "orgNamePlaceholder": "Please enter organization name",
+    "belongedOrg": "Belonged Organization",
+    "belongedOrgPlaceholder": "Please enter belonged organization",
+    "belongedOrgSearchPlaceholder": "Please select belonged organization",
+    "sector": "Sector",
+    "sectorPlaceholder": "Please enter sector",
+    "sectorSearchPlaceholder": "Please select sector",
+    "status": "Status",
+    "statusPlaceholder": "Please select status",
+    "effectiveDate": "Effective Date",
+    "expireDate": "Expire Date",
+    "expireDatePlaceholder": "Please select expire date",
+    "updatedAt": "Updated At"
+  }
+}

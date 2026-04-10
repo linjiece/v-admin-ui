@@ -1,0 +1,21 @@
+{
+  "org": {
+    "title": "行政组织",
+    "orgCode": "行政组织编码",
+    "orgCodePlaceholder": "请输入行政组织编码",
+    "orgName": "行政组织名称",
+    "orgNamePlaceholder": "请输入行政组织名称",
+    "belongedOrg": "所属组织",
+    "belongedOrgPlaceholder": "请输入所属组织",
+    "belongedOrgSearchPlaceholder": "请选择所属组织",
+    "sector": "部门",
+    "sectorPlaceholder": "请输入部门",
+    "sectorSearchPlaceholder": "请选择部门",
+    "status": "状态",
+    "statusPlaceholder": "请选择状态",
+    "effectiveDate": "生效日期",
+    "expireDate": "失效日期",
+    "expireDatePlaceholder": "请选择失效日期",
+    "updatedAt": "更新时间"
+  }
+}

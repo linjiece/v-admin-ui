@@ -6,13 +6,15 @@ import type { FiOrgResponse } from '#/api/fi/org';
 import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
-import { ElTag } from 'element-plus';
+import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { fetchFiOrgListApi } from '#/api/fi/org';
 
 import { useSearchFormSchema, useTableColumns } from './data';
+import OrgFormModal from './modules/org-form-modal.vue';
 
 defineOptions({ name: 'FiOrg' });
 
@@ -20,6 +22,7 @@ const searchSchema = useSearchFormSchema();
 const tableColumns = useTableColumns();
 
 const loading = ref(false);
+const orgFormModalRef = ref<InstanceType<typeof OrgFormModal>>();
 
 const formOptions: VbenFormProps = {
   collapsed: true,
@@ -57,7 +60,8 @@ const gridOptions: VxeGridProps<FiOrgResponse> = {
             pageSize: page.pageSize,
             org_code: formValues.org_code,
             org_name: formValues.org_name,
-            status: formValues.status,
+            belonged_org: formValues.belonged_org,
+            sector: formValues.sector,
           };
           return await fetchFiOrgListApi(params);
         } finally {
@@ -84,6 +88,14 @@ function handleReset() {
   gridApi.reset();
   gridApi.reload();
 }
+
+function handleEdit(row: FiOrgResponse) {
+  orgFormModalRef.value?.open(row);
+}
+
+function handleSuccess() {
+  gridApi.reload();
+}
 </script>
 
 <template>
@@ -94,9 +106,15 @@ function handleReset() {
       </template>
       <template #status="{ row }">
         <ElTag :type="row.status ? 'success' : 'danger'">
-          {{ row.status ? '启用' : '停用' }}
+          {{ row.status ? $t('common.enabled') : $t('common.disabled') }}
         </ElTag>
+      </template>
+      <template #operation="{ row }">
+        <ElButton type="primary" link @click="handleEdit(row)">
+          {{ $t('common.edit') }}
+        </ElButton>
       </template>
     </Grid>
   </Page>
+  <OrgFormModal ref="orgFormModalRef" @success="handleSuccess" />
 </template>

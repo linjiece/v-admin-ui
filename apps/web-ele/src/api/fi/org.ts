@@ -55,6 +55,17 @@ export async function fetchFiOrgListApi(params: FiOrgQueryParams) {
   return requestClient.get<FiOrgListResponse>('/api/fi/org/', { params });
 }
 
+export interface FiOrgUpdateParams {
+  org_name?: string;
+  belonged_org?: string;
+  sector?: string;
+  expire_date?: string;
+}
+
+export async function updateFiOrgApi(id: number, data: FiOrgUpdateParams) {
+  return requestClient.put<FiOrgResponse>(`/api/fi/org/${id}`, data);
+}
+
 export async function importOrgApi(data: OrgInfo) {
   return requestClient.post<OrgInfo>('/api/fi/org', data);
 }

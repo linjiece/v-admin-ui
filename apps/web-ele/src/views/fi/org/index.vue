@@ -3,7 +3,6 @@ import type { FiOrgResponse } from '#/api/fi/org';
 
 import { ref } from 'vue';
 
-import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 import { Edit, Plus, Trash2 } from '@vben/icons';
 import { $t } from '@vben/locales';
@@ -23,9 +22,7 @@ import OrgForm from './modules/org-form-modal.vue';
 
 defineOptions({ name: 'FiOrg' });
 
-const { hasAccessByCodes } = useAccess();
 const orgFormRef = ref<InstanceType<typeof OrgForm>>();
-const selectedRows = ref<FiOrgResponse[]>([]);
 
 const belongedOrgOptions = getBelongedOrgOptions();
 const sectorOptions = getSectorOptions();
@@ -38,16 +35,6 @@ function getStatusTagType(value: boolean): TagType {
 
 function getStatusTagLabel(value: boolean): string {
   return value ? $t('common.enabled') : $t('common.disabled');
-}
-
-function getBelongedOrgLabel(value: string): string {
-  const option = belongedOrgOptions.find((o) => o.value === value);
-  return option?.label || value || '-';
-}
-
-function getSectorLabel(value: string): string {
-  const option = sectorOptions.find((o) => o.value === value);
-  return option?.label || value || '-';
 }
 
 function onEdit(row: FiOrgResponse) {
@@ -75,10 +62,6 @@ function onDelete(row: FiOrgResponse) {
     .catch(() => {});
 }
 
-function handleSelectionChange(items: Record<string, any>[]) {
-  selectedRows.value = items as FiOrgResponse[];
-}
-
 const fetchOrgList = async (params: any) => {
   const res = await fetchFiOrgListApi({
     page: params.page.currentPage,
@@ -99,7 +82,7 @@ const [Grid, gridApi] = useMyTable({
     columns: useTableColumns(),
     border: true,
     stripe: true,
-    showSelection: true,
+    showSelection: false,
     showIndex: true,
     proxyConfig: {
       autoLoad: true,
@@ -134,7 +117,7 @@ function refreshGrid() {
   <Page auto-content-height>
     <OrgForm ref="orgFormRef" @success="refreshGrid" />
 
-    <Grid @selection-change="handleSelectionChange">
+    <Grid>
       <template #toolbar-actions>
         <ElButton
           type="primary"

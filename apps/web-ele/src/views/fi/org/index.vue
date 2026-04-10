@@ -1,0 +1,102 @@
+<script lang="ts" setup>
+import type { VbenFormProps } from '#/adapter/form';
+import type { VxeGridListeners, VxeGridProps } from '#/adapter/vxe-table';
+import type { FiOrgResponse } from '#/api/fi/org';
+
+import { ref } from 'vue';
+
+import { Page } from '@vben/common-ui';
+
+import { ElTag } from 'element-plus';
+
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { fetchFiOrgListApi } from '#/api/fi/org';
+
+import { useSearchFormSchema, useTableColumns } from './data';
+
+defineOptions({ name: 'FiOrg' });
+
+const searchSchema = useSearchFormSchema();
+const tableColumns = useTableColumns();
+
+const loading = ref(false);
+
+const formOptions: VbenFormProps = {
+  collapsed: true,
+  commonConfig: {
+    labelWidth: 100,
+    componentProps: {
+      class: 'w-full',
+    },
+  },
+  schema: searchSchema,
+};
+
+const gridOptions: VxeGridProps<FiOrgResponse> = {
+  columns: tableColumns,
+  toolbarConfig: {
+    refresh: true,
+    print: false,
+    export: false,
+    zoom: true,
+    slots: {
+      buttons: 'toolbar-buttons',
+    },
+  },
+  border: false,
+  height: 'auto',
+  keepSource: true,
+  pagerConfig: {},
+  proxyConfig: {
+    ajax: {
+      query: async ({ page }, formValues) => {
+        loading.value = true;
+        try {
+          const params = {
+            page: page.currentPage,
+            pageSize: page.pageSize,
+            org_code: formValues.org_code,
+            org_name: formValues.org_name,
+            status: formValues.status,
+          };
+          return await fetchFiOrgListApi(params);
+        } finally {
+          loading.value = false;
+        }
+      },
+    },
+  },
+};
+
+const gridEvents: VxeGridListeners<FiOrgResponse> = {};
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions,
+  gridOptions,
+  gridEvents,
+});
+
+function handleSearch() {
+  gridApi.reload();
+}
+
+function handleReset() {
+  gridApi.reset();
+  gridApi.reload();
+}
+</script>
+
+<template>
+  <Page auto-content-height>
+    <Grid :loading="loading" @search="handleSearch" @reset="handleReset">
+      <template #toolbar-buttons>
+        <div></div>
+      </template>
+      <template #status="{ row }">
+        <ElTag :type="row.status ? 'success' : 'danger'">
+          {{ row.status ? '启用' : '停用' }}
+        </ElTag>
+      </template>
+    </Grid>
+  </Page>
+</template>

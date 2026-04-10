@@ -127,24 +127,18 @@ export function useEditFormSchema(): VbenFormSchema[] {
 export function useTableColumns(): Column[] {
   return [
     {
-      key: 'seq',
-      title: $t('common.seq'),
-      width: 60,
-      align: 'center',
-    },
-    {
       key: 'org_code',
       dataKey: 'org_code',
       title: $t('fi.org.orgCode'),
-      width: 100,
+      width: 200,
     },
     {
       key: 'org_name',
       dataKey: 'org_name',
       title: $t('fi.org.orgName'),
-      minWidth: 200,
+      minWidth: 400,
       flex: 1,
-      width: 200,
+      width: 400,
     },
     {
       key: 'belonged_org',
@@ -186,7 +180,7 @@ export function useTableColumns(): Column[] {
     {
       key: 'actions',
       title: $t('common.operation'),
-      width: 120,
+      width: 180,
       align: 'center',
       fixed: 'right',
       slots: { default: 'cell-actions' },

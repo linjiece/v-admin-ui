@@ -85,7 +85,7 @@ defineExpose({ open, close });
 
 <template>
   <MyDrawer
-    v-model:open="visible"
+    v-model="visible"
     :title="getTitle"
     :width="500"
     @close="close"

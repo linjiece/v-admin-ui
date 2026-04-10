@@ -4,7 +4,7 @@ import type { FiOrgResponse } from '#/api/fi/org';
 import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import { Edit, Plus, Trash2 } from '@vben/icons';
+import { Edit, Trash2 } from '@vben/icons';
 import { $t } from '@vben/locales';
 
 import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus';
@@ -118,16 +118,6 @@ function refreshGrid() {
     <OrgForm ref="orgFormRef" @success="refreshGrid" />
 
     <Grid>
-      <template #toolbar-actions>
-        <ElButton
-          type="primary"
-          :icon="Plus"
-          @click="onEdit({} as FiOrgResponse)"
-        >
-          {{ $t('ui.actionTitle.create', [$t('fi.org.title')]) }}
-        </ElButton>
-      </template>
-
       <template #cell-status="{ row }">
         <ElTag :type="getStatusTagType(row.status)" size="small">
           {{ getStatusTagLabel(row.status) }}

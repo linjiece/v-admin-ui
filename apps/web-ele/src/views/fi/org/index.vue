@@ -62,6 +62,19 @@ function onDelete(row: FiOrgResponse) {
     .catch(() => {});
 }
 
+const sortState = ref<{ orderBy?: string; orderDir?: string }>({});
+
+function handleSortChange({ prop, order }: { order: string; prop: string }) {
+  sortState.value =
+    order && prop
+      ? {
+          orderBy: prop,
+          orderDir: order === 'ascending' ? 'asc' : 'desc',
+        }
+      : {};
+  refreshGrid();
+}
+
 const fetchOrgList = async (params: any) => {
   const res = await fetchFiOrgListApi({
     page: params.page.currentPage,
@@ -70,6 +83,7 @@ const fetchOrgList = async (params: any) => {
     org_name: params.form?.org_name,
     belonged_org: params.form?.belonged_org,
     sector: params.form?.sector,
+    ...sortState.value,
   });
   return {
     items: res.items,
@@ -117,7 +131,7 @@ function refreshGrid() {
   <Page auto-content-height>
     <OrgForm ref="orgFormRef" @success="refreshGrid" />
 
-    <Grid>
+    <Grid @sort-change="handleSortChange">
       <template #cell-status="{ row }">
         <ElTag :type="getStatusTagType(row.status)" size="small">
           {{ getStatusTagLabel(row.status) }}

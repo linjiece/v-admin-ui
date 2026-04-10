@@ -130,15 +130,15 @@ export function useTableColumns(): Column[] {
       key: 'org_code',
       dataKey: 'org_code',
       title: $t('fi.org.orgCode'),
-      width: 200,
+      width: 240,
     },
     {
       key: 'org_name',
       dataKey: 'org_name',
       title: $t('fi.org.orgName'),
-      minWidth: 400,
+      minWidth: 480,
       flex: 1,
-      width: 400,
+      width: 480,
     },
     {
       key: 'belonged_org',
@@ -164,12 +164,14 @@ export function useTableColumns(): Column[] {
       dataKey: 'effective_date',
       title: $t('fi.org.effectiveDate'),
       width: 100,
+      sortable: true,
     },
     {
       key: 'expire_date',
       dataKey: 'expire_date',
       title: $t('fi.org.expireDate'),
       width: 100,
+      sortable: true,
     },
     {
       key: 'updated_at',

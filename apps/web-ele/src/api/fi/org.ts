@@ -45,6 +45,8 @@ export interface FiOrgQueryParams {
   status?: boolean;
   belonged_org?: string;
   sector?: string;
+  order_by?: string;
+  order_dir?: string;
 }
 
 export async function fetchOrgApi(orgCode: string) {

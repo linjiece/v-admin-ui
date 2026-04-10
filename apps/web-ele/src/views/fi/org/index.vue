@@ -1,120 +1,164 @@
 <script lang="ts" setup>
-import type { VbenFormProps } from '#/adapter/form';
-import type { VxeGridListeners, VxeGridProps } from '#/adapter/vxe-table';
 import type { FiOrgResponse } from '#/api/fi/org';
 
 import { ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
+import { Edit, Plus, Trash2 } from '@vben/icons';
 import { $t } from '@vben/locales';
 
-import { ElButton, ElTag } from 'element-plus';
+import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { fetchFiOrgListApi } from '#/api/fi/org';
+import { useMyTable } from '#/components/table';
 
-import { useSearchFormSchema, useTableColumns } from './data';
-import OrgFormModal from './modules/org-form-modal.vue';
+import {
+  getBelongedOrgOptions,
+  getSectorOptions,
+  useSearchFormSchema,
+  useTableColumns,
+} from './data';
+import OrgForm from './modules/org-form-modal.vue';
 
 defineOptions({ name: 'FiOrg' });
 
-const searchSchema = useSearchFormSchema();
-const tableColumns = useTableColumns();
+const { hasAccessByCodes } = useAccess();
+const orgFormRef = ref<InstanceType<typeof OrgForm>>();
+const selectedRows = ref<FiOrgResponse[]>([]);
 
-const loading = ref(false);
-const orgFormModalRef = ref<InstanceType<typeof OrgFormModal>>();
+const belongedOrgOptions = getBelongedOrgOptions();
+const sectorOptions = getSectorOptions();
 
-const formOptions: VbenFormProps = {
-  collapsed: true,
-  commonConfig: {
-    labelWidth: 100,
-    componentProps: {
-      class: 'w-full',
+type TagType = 'danger' | 'info' | 'primary' | 'success' | 'warning';
+
+function getStatusTagType(value: boolean): TagType {
+  return value ? 'success' : 'danger';
+}
+
+function getStatusTagLabel(value: boolean): string {
+  return value ? $t('common.enabled') : $t('common.disabled');
+}
+
+function getBelongedOrgLabel(value: string): string {
+  const option = belongedOrgOptions.find((o) => o.value === value);
+  return option?.label || value || '-';
+}
+
+function getSectorLabel(value: string): string {
+  const option = sectorOptions.find((o) => o.value === value);
+  return option?.label || value || '-';
+}
+
+function onEdit(row: FiOrgResponse) {
+  orgFormRef.value?.open(row);
+}
+
+function onDelete(row: FiOrgResponse) {
+  ElMessageBox.confirm(
+    $t('ui.actionMessage.deleteConfirm', [row.org_name]),
+    $t('common.delete'),
+    {
+      confirmButtonText: $t('common.confirm'),
+      cancelButtonText: $t('common.cancel'),
+      type: 'warning',
     },
-  },
-  schema: searchSchema,
+  )
+    .then(async () => {
+      try {
+        ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.org_name]));
+        refreshGrid();
+      } catch {
+        ElMessage.error($t('ui.actionMessage.deleteError'));
+      }
+    })
+    .catch(() => {});
+}
+
+function handleSelectionChange(items: Record<string, any>[]) {
+  selectedRows.value = items as FiOrgResponse[];
+}
+
+const fetchOrgList = async (params: any) => {
+  const res = await fetchFiOrgListApi({
+    page: params.page.currentPage,
+    pageSize: params.page.pageSize,
+    org_code: params.form?.org_code,
+    org_name: params.form?.org_name,
+    belonged_org: params.form?.belonged_org,
+    sector: params.form?.sector,
+  });
+  return {
+    items: res.items,
+    total: res.total,
+  };
 };
 
-const gridOptions: VxeGridProps<FiOrgResponse> = {
-  columns: tableColumns,
-  toolbarConfig: {
-    refresh: true,
-    print: false,
-    export: false,
-    zoom: true,
-    slots: {
-      buttons: 'toolbar-buttons',
-    },
-  },
-  border: false,
-  height: 'auto',
-  keepSource: true,
-  pagerConfig: {},
-  proxyConfig: {
-    ajax: {
-      query: async ({ page }, formValues) => {
-        loading.value = true;
-        try {
-          const params = {
-            page: page.currentPage,
-            pageSize: page.pageSize,
-            org_code: formValues.org_code,
-            org_name: formValues.org_name,
-            belonged_org: formValues.belonged_org,
-            sector: formValues.sector,
-          };
-          return await fetchFiOrgListApi(params);
-        } finally {
-          loading.value = false;
-        }
+const [Grid, gridApi] = useMyTable({
+  gridOptions: {
+    columns: useTableColumns(),
+    border: true,
+    stripe: true,
+    showSelection: true,
+    showIndex: true,
+    proxyConfig: {
+      autoLoad: true,
+      ajax: {
+        query: fetchOrgList,
       },
     },
+    pagerConfig: {
+      enabled: true,
+      pageSize: 20,
+    },
+    toolbarConfig: {
+      search: true,
+      refresh: true,
+      zoom: true,
+      custom: true,
+    },
   },
-};
-
-const gridEvents: VxeGridListeners<FiOrgResponse> = {};
-
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions,
-  gridOptions,
-  gridEvents,
+  formOptions: {
+    schema: useSearchFormSchema(),
+    showCollapseButton: false,
+    submitOnChange: false,
+  },
 });
 
-function handleSearch() {
-  gridApi.reload();
-}
-
-function handleReset() {
-  gridApi.reset();
-  gridApi.reload();
-}
-
-function handleEdit(row: FiOrgResponse) {
-  orgFormModalRef.value?.open(row);
-}
-
-function handleSuccess() {
+function refreshGrid() {
   gridApi.reload();
 }
 </script>
 
 <template>
   <Page auto-content-height>
-    <Grid :loading="loading" @search="handleSearch" @reset="handleReset">
-      <template #toolbar-buttons>
-        <div></div>
+    <OrgForm ref="orgFormRef" @success="refreshGrid" />
+
+    <Grid @selection-change="handleSelectionChange">
+      <template #toolbar-actions>
+        <ElButton
+          type="primary"
+          :icon="Plus"
+          @click="onEdit({} as FiOrgResponse)"
+        >
+          {{ $t('ui.actionTitle.create', [$t('fi.org.title')]) }}
+        </ElButton>
       </template>
-      <template #status="{ row }">
-        <ElTag :type="row.status ? 'success' : 'danger'">
-          {{ row.status ? $t('common.enabled') : $t('common.disabled') }}
+
+      <template #cell-status="{ row }">
+        <ElTag :type="getStatusTagType(row.status)" size="small">
+          {{ getStatusTagLabel(row.status) }}
         </ElTag>
       </template>
-      <template #operation="{ row }">
-        <ElButton type="primary" link @click="handleEdit(row)">
+
+      <template #cell-actions="{ row }">
+        <ElButton link type="primary" :icon="Edit" @click="onEdit(row)">
           {{ $t('common.edit') }}
+        </ElButton>
+        <ElButton link type="danger" :icon="Trash2" @click="onDelete(row)">
+          {{ $t('common.delete') }}
         </ElButton>
       </template>
     </Grid>
   </Page>
-  <OrgFormModal ref="orgFormModalRef" @success="handleSuccess" />
 </template>

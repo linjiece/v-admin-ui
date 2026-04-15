@@ -135,7 +135,7 @@ async function pollTaskStatus() {
 }
 
 function startPolling() {
-  stopPolling();
+  clearPollingTimers();
   pollingTimeout = setTimeout(() => {
     stopPolling('Polling timeout');
   }, POLLING_TIMEOUT);
@@ -143,7 +143,7 @@ function startPolling() {
   pollTaskStatus();
 }
 
-function stopPolling(reason?: string) {
+function clearPollingTimers() {
   if (pollingTimer) {
     clearInterval(pollingTimer);
     pollingTimer = null;
@@ -152,6 +152,10 @@ function stopPolling(reason?: string) {
     clearTimeout(pollingTimeout);
     pollingTimeout = null;
   }
+}
+
+function stopPolling(reason?: string) {
+  clearPollingTimers();
   isExecuting.value = false;
   if (wsManager && wsManager.isConnected) {
     wsManager.send({ type: 'stop' });

@@ -144,13 +144,13 @@ export function useTableColumns(): Column[] {
       key: 'belonged_org',
       dataKey: 'belonged_org',
       title: $t('fi.org.belongedOrg'),
-      width: 100,
+      width: 120,
     },
     {
       key: 'sector',
       dataKey: 'sector',
       title: $t('fi.org.sector'),
-      width: 100,
+      width: 120,
     },
     {
       key: 'status',
@@ -163,14 +163,14 @@ export function useTableColumns(): Column[] {
       key: 'effective_date',
       dataKey: 'effective_date',
       title: $t('fi.org.effectiveDate'),
-      width: 100,
+      width: 120,
       sortable: true,
     },
     {
       key: 'expire_date',
       dataKey: 'expire_date',
       title: $t('fi.org.expireDate'),
-      width: 100,
+      width: 120,
       sortable: true,
     },
     {

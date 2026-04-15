@@ -42,6 +42,7 @@
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
     "@vueuse/core": "catalog:",
+    "cron-parser": "^4.9.0",
     "dayjs": "catalog:",
     "element-plus": "catalog:",
     "pinia": "catalog:",

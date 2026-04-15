@@ -124,6 +124,16 @@ const ElCascader = defineAsyncComponent(() =>
     import('element-plus/es/components/cascader/style/css'),
   ]).then(([res]) => res.ElCascader),
 );
+const UserSelector = defineAsyncComponent(() =>
+  import('#/components/form/user-selector/src/user-selector.vue').then(
+    (res) => res.default,
+  ),
+);
+const CronSelector = defineAsyncComponent(() =>
+  import('#/components/form/cron-selector/cron-selector.vue').then(
+    (res) => res.default,
+  ),
+);
 
 const withDefaultPlaceholder = <T extends Component>(
   component: T,
@@ -166,6 +176,7 @@ export type ComponentType =
   | 'Cascader'
   | 'Checkbox'
   | 'CheckboxGroup'
+  | 'CronSelector'
   | 'DatePicker'
   | 'Divider'
   | 'IconPicker'
@@ -178,6 +189,7 @@ export type ComponentType =
   | 'TimePicker'
   | 'TreeSelect'
   | 'Upload'
+  | 'UserSelector'
   | BaseFormComponentType;
 
 async function initComponentAdapter() {
@@ -241,6 +253,8 @@ async function initComponentAdapter() {
     PrimaryButton: (props, { attrs, slots }) => {
       return h(ElButton, { ...props, attrs, type: 'primary' }, slots);
     },
+
+    CronSelector,
     Divider: ElDivider,
     IconPicker: withDefaultPlaceholder(IconPicker, 'select', {
       iconSlot: 'append',
@@ -317,6 +331,7 @@ async function initComponentAdapter() {
     },
     TreeSelect: withDefaultPlaceholder(ElTreeSelect, 'select'),
     Upload: ElUpload,
+    UserSelector: withDefaultPlaceholder(UserSelector, 'select'),
   };
 
   // 将组件注册到全局共享状态中

@@ -221,6 +221,7 @@ async function handleSave() {
       orgName: values.orgName,
       acctLedgerCode: values.acctLedgerCode,
       acctLedgerName: values.acctLedgerName,
+      financeManager: values.financeManager,
     },
   };
   await createTask(data as any);

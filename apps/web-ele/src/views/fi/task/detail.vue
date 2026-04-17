@@ -33,6 +33,13 @@ interface LogEntry {
   time: string;
   level: 'ERROR' | 'INFO' | 'SUCCESS' | 'WARN';
   message: string;
+  executor: string;
+}
+
+interface RawLogMessage {
+  type: string;
+  message: string;
+  timestamp: string;
 }
 
 const route = useRoute();
@@ -58,7 +65,7 @@ const isRunning = computed(
 let wsManager: null | ReturnType<typeof createLedgerImportWebSocket> = null;
 let pollingTimer: null | ReturnType<typeof setInterval> = null;
 let pollingTimeout: null | ReturnType<typeof setTimeout> = null;
-const POLLING_INTERVAL = 1000;
+const POLLING_INTERVAL = 10_000;
 const POLLING_TIMEOUT = 600_000;
 
 const orderedNodes = computed(() => {
@@ -66,6 +73,19 @@ const orderedNodes = computed(() => {
     (a, b) => a.layer - b.layer || a.step_code.localeCompare(b.step_code),
   );
 });
+
+function formatTimestamp(isoString: string): string {
+  try {
+    const date = new Date(isoString);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const ms = String(date.getMilliseconds()).padStart(3, '0');
+    return `${hours}:${minutes}:${seconds}.${ms}`;
+  } catch {
+    return isoString;
+  }
+}
 
 function appendLog(log: LogEntry) {
   logRows.value.push(log);
@@ -78,6 +98,56 @@ function appendLog(log: LogEntry) {
       logArea.scrollTop = logArea.scrollHeight;
     }
   });
+}
+
+function updateNodeStatus(executor: string, level: LogEntry['level']) {
+  if (executor === 'default') {
+    return;
+  }
+  const node = dagNodes.value.find((n) => n.step_code === executor);
+  if (!node) {
+    return;
+  }
+  switch (level) {
+    case 'ERROR': {
+      node.status = 'FAILED';
+
+      break;
+    }
+    case 'INFO': {
+      node.status = 'RUNNING';
+
+      break;
+    }
+    case 'SUCCESS': {
+      node.status = 'SUCCESS';
+
+      break;
+    }
+    // No default
+  }
+}
+
+function parseAndAppendLog(raw: RawLogMessage) {
+  const time = formatTimestamp(raw.timestamp);
+  let level: LogEntry['level'] = 'INFO';
+  let message = raw.message;
+  let executor = 'default';
+
+  if (raw.type === 'logs') {
+    try {
+      const parsed = JSON.parse(raw.message);
+      level = (parsed.level as LogEntry['level']) || 'INFO';
+      message = parsed.message || raw.message;
+      executor = parsed.script_id || 'default';
+    } catch {
+      level = 'INFO';
+      message = raw.message;
+    }
+  }
+
+  updateNodeStatus(executor, level);
+  appendLog({ time, level, message, executor });
 }
 
 async function loadTaskInfo() {
@@ -204,13 +274,25 @@ function createTaskLogSocket() {
       });
     },
     onMessage: (message: WebSocketApi.WebSocketMessage) => {
-      const content =
-        message.content ?? message.data ?? JSON.stringify(message);
-      appendLog({
-        time: new Date().toLocaleTimeString(),
-        level: 'INFO',
-        message: content,
-      });
+      try {
+        const raw: RawLogMessage =
+          typeof message === 'string'
+            ? JSON.parse(message)
+            : {
+                type: (message as any).type ?? 'logs',
+                message:
+                  message.content ?? message.data ?? JSON.stringify(message),
+                timestamp:
+                  (message as any).timestamp ?? new Date().toISOString(),
+              };
+        parseAndAppendLog(raw);
+      } catch {
+        parseAndAppendLog({
+          type: 'logs',
+          message: message.content ?? message.data ?? String(message),
+          timestamp: new Date().toISOString(),
+        });
+      }
     },
     onError: (event) => {
       appendLog({
@@ -466,7 +548,7 @@ onUnmounted(() => {
           <div
             id="task-log-output"
             ref="logContainer"
-            class="flex-1 space-y-1 overflow-y-auto bg-gray-50/50 p-4 font-mono text-xs"
+            class="h-80 space-y-1 overflow-y-auto bg-gray-50/50 p-4 font-mono text-xs"
           >
             <div
               v-for="(log, index) in logRows"
@@ -486,6 +568,11 @@ onUnmounted(() => {
                 ]"
               >
                 {{ log.level }}
+              </span>
+              <span
+                class="shrink-0 rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-600"
+              >
+                {{ log.executor }}
               </span>
               <span class="flex-1 break-all text-gray-600">
                 {{ log.message }}

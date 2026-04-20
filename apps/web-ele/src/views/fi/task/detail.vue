@@ -40,6 +40,7 @@ interface RawLogMessage {
   type: string;
   message: string;
   timestamp: string;
+  data?: Record<string, any>;
 }
 
 const route = useRoute();
@@ -87,8 +88,27 @@ function formatTimestamp(isoString: string): string {
   }
 }
 
-function appendLog(log: LogEntry) {
-  logRows.value.push(log);
+function formatTime(): string {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const ms = String(now.getMilliseconds()).padStart(3, '0');
+  return `${hours}:${minutes}:${seconds}.${ms}`;
+}
+
+function appendLog(log: {
+  executor?: string;
+  level: LogEntry['level'];
+  message: string;
+  time: string;
+}) {
+  logRows.value.push({
+    time: log.time,
+    level: log.level,
+    message: log.message,
+    executor: log.executor ?? 'default',
+  });
   if (logRows.value.length > 1000) {
     logRows.value.splice(0, logRows.value.length - 1000);
   }
@@ -134,16 +154,12 @@ function parseAndAppendLog(raw: RawLogMessage) {
   let message = raw.message;
   let executor = 'default';
 
-  if (raw.type === 'logs') {
-    try {
-      const parsed = JSON.parse(raw.message);
-      level = (parsed.level as LogEntry['level']) || 'INFO';
-      message = parsed.message || raw.message;
-      executor = parsed.script_id || 'default';
-    } catch {
-      level = 'INFO';
-      message = raw.message;
-    }
+  if (raw.type === 'logs' && raw.data) {
+    const parsed = raw.data;
+    level =
+      ((parsed.level as string)?.toUpperCase() as LogEntry['level']) || 'INFO';
+    message = parsed.message ?? raw.message;
+    executor = parsed.script_id ?? 'default';
   }
 
   updateNodeStatus(executor, level);
@@ -232,9 +248,10 @@ function stopPolling(reason?: string) {
   }
   if (reason) {
     appendLog({
-      time: new Date().toLocaleTimeString(),
+      time: formatTime(),
       level: 'INFO',
       message: `轮询结束: ${reason}`,
+      executor: 'default',
     });
   }
 }
@@ -268,55 +285,58 @@ function createTaskLogSocket() {
     onOpen: () => {
       wsStatus.value = 'OPEN';
       appendLog({
-        time: new Date().toLocaleTimeString(),
+        time: formatTime(),
         level: 'INFO',
         message: '已连接到任务日志 WebSocket',
+        executor: 'default',
       });
     },
     onMessage: (message: WebSocketApi.WebSocketMessage) => {
       try {
-        const raw: RawLogMessage =
-          typeof message === 'string'
-            ? JSON.parse(message)
-            : {
-                type: (message as any).type ?? 'logs',
-                message:
-                  message.content ?? message.data ?? JSON.stringify(message),
-                timestamp:
-                  (message as any).timestamp ?? new Date().toISOString(),
-              };
+        let parsedMsg: Record<string, any>;
+        parsedMsg =
+          typeof message === 'string' ? JSON.parse(message) : (message as any);
+        const raw: RawLogMessage = {
+          type: parsedMsg.type ?? 'logs',
+          message: parsedMsg.message ?? '',
+          timestamp: parsedMsg.timestamp ?? new Date().toISOString(),
+          data: parsedMsg.data,
+        };
         parseAndAppendLog(raw);
       } catch {
         parseAndAppendLog({
           type: 'logs',
-          message: message.content ?? message.data ?? String(message),
+          message: String(message),
           timestamp: new Date().toISOString(),
         });
       }
     },
     onError: (event) => {
       appendLog({
-        time: new Date().toLocaleTimeString(),
+        time: formatTime(),
         level: 'ERROR',
         message: `WebSocket 错误: ${event?.type ?? ''}`,
+        executor: 'default',
       });
       isExecuting.value = false;
       closeWebSocket();
     },
     onClose: () => {
       appendLog({
-        time: new Date().toLocaleTimeString(),
+        time: formatTime(),
         level: 'INFO',
         message: 'WebSocket 已关闭',
+        executor: 'default',
       });
       isExecuting.value = false;
       closeWebSocket();
     },
     onReconnect: (attempt) => {
       appendLog({
-        time: new Date().toLocaleTimeString(),
+        time: formatTime(),
         level: 'INFO',
         message: `WebSocket 重连中，第 ${attempt} 次`,
+        executor: 'default',
       });
       wsStatus.value = 'CONNECTING';
     },
@@ -325,9 +345,10 @@ function createTaskLogSocket() {
   wsManager.connect().catch((error) => {
     wsStatus.value = 'CLOSED';
     appendLog({
-      time: new Date().toLocaleTimeString(),
+      time: formatTime(),
       level: 'ERROR',
       message: `WebSocket 连接失败：${error?.message ?? error}`,
+      executor: 'default',
     });
   });
 }
@@ -361,9 +382,10 @@ async function startExecution() {
   } catch (error) {
     console.error('执行失败', error);
     appendLog({
-      time: new Date().toLocaleTimeString(),
+      time: formatTime(),
       level: 'ERROR',
       message: `执行失败: ${error?.message ?? error}`,
+      executor: 'default',
     });
     ElMessage.error('执行失败，请重试');
     isExecuting.value = false;
@@ -379,14 +401,31 @@ function closeWebSocket() {
   wsStatus.value = 'CLOSED';
 }
 
-onMounted(() => {
+async function loadHistoricalLogs() {
+  try {
+    const response = await getTaskLogs(taskId);
+    if (response.logs && response.logs.length > 0) {
+      for (const raw of response.logs) {
+        parseAndAppendLog(raw as RawLogMessage);
+      }
+    }
+  } catch (error) {
+    console.error('加载历史日志失败', error);
+  }
+}
+
+onMounted(async () => {
   if (!taskId) {
     ElMessage.error('任务ID未提供');
     return;
   }
 
-  loadTaskInfo();
-  loadDAG();
+  await loadTaskInfo();
+  await loadDAG();
+
+  if (taskStatus.value === 'SUCCESS' || taskStatus.value === 'FAILED') {
+    await loadHistoricalLogs();
+  }
 });
 
 onUnmounted(() => {
@@ -548,7 +587,7 @@ onUnmounted(() => {
           <div
             id="task-log-output"
             ref="logContainer"
-            class="h-80 space-y-1 overflow-y-auto bg-gray-50/50 p-4 font-mono text-xs"
+            class="flex-1 space-y-1 overflow-y-auto bg-gray-50/50 p-4 font-mono text-xs"
           >
             <div
               v-for="(log, index) in logRows"
@@ -559,7 +598,7 @@ onUnmounted(() => {
                 {{ log.time }}
               </span>
               <span
-                class="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium"
+                class="inline-block w-12 shrink-0 select-none rounded bg-blue-100 px-1.5 py-0.5 text-center text-xs font-medium"
                 :class="[
                   log.level === 'ERROR' && 'bg-red-100 text-red-600',
                   log.level === 'WARN' && 'bg-yellow-100 text-yellow-600',
@@ -570,7 +609,8 @@ onUnmounted(() => {
                 {{ log.level }}
               </span>
               <span
-                class="shrink-0 rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-600"
+                class="inline-block w-20 shrink-0 select-none truncate rounded bg-purple-100 px-1.5 py-0.5 text-center text-xs font-medium text-purple-600"
+                :title="log.executor"
               >
                 {{ log.executor }}
               </span>

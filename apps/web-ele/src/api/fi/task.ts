@@ -239,3 +239,16 @@ export async function executeTaskStep(
     data,
   );
 }
+
+export interface TaskLogResponse {
+  logs: Array<{
+    type: string;
+    message: string;
+    timestamp: string;
+    data?: Record<string, any>;
+  }>;
+}
+
+export async function getTaskLogs(taskId: string): Promise<TaskLogResponse> {
+  return requestClient.get<TaskLogResponse>(`/api/fi/task/${taskId}/logs`);
+}

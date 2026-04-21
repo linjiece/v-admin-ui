@@ -242,10 +242,10 @@ export async function executeTaskStep(
 
 export interface TaskLogResponse {
   logs: Array<{
-    type: string;
+    data?: Record<string, any>;
     message: string;
     timestamp: string;
-    data?: Record<string, any>;
+    type: string;
   }>;
 }
 

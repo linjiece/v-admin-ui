@@ -551,7 +551,9 @@ onUnmounted(() => {
           </div>
         </ElCard>
 
-        <ElCard class="flex flex-1 flex-col border-0 bg-white shadow-sm">
+        <ElCard
+          class="flex h-96 flex-col overflow-hidden border-0 bg-white shadow-sm"
+        >
           <template #header>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">

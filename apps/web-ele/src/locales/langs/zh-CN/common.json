@@ -68,7 +68,9 @@
       "deleteSuccess": "删除成功",
       "deleteConfirm": "确定要删除 {0} 吗？",
       "deleteError": "删除失败",
-      "loadError": "加载失败"
+      "loadError": "加载失败",
+      "exportSuccess": "导出成功",
+      "exportError": "导出失败"
     },
     "submit": "提交",
     "formRules": {

@@ -83,6 +83,14 @@ export function useEditFormSchema(): VbenFormSchema[] {
   return [
     {
       component: 'Input',
+      fieldName: 'org_code',
+      label: $t('fi.org.orgCode'),
+      componentProps: {
+        disabled: true,
+      },
+    },
+    {
+      component: 'Input',
       fieldName: 'org_name',
       label: $t('fi.org.orgName'),
       componentProps: {
@@ -111,6 +119,24 @@ export function useEditFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      component: 'Input',
+      fieldName: 'status',
+      label: $t('fi.org.status'),
+      componentProps: {
+        disabled: true,
+      },
+    },
+    {
+      component: 'DatePicker',
+      fieldName: 'effective_date',
+      label: $t('fi.org.effectiveDate'),
+      componentProps: {
+        type: 'date',
+        disabled: true,
+        valueFormat: 'YYYY-MM-DD',
+      },
+    },
+    {
       component: 'DatePicker',
       fieldName: 'expire_date',
       label: $t('fi.org.expireDate'),
@@ -119,6 +145,14 @@ export function useEditFormSchema(): VbenFormSchema[] {
         placeholder: $t('fi.org.expireDatePlaceholder'),
         clearable: true,
         valueFormat: 'YYYY-MM-DD',
+      },
+    },
+    {
+      component: 'Input',
+      fieldName: 'updated_at',
+      label: $t('fi.org.updatedAt'),
+      componentProps: {
+        disabled: true,
       },
     },
   ];

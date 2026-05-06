@@ -67,7 +67,9 @@
       "deleteSuccess": "Deleted successfully",
       "deleteConfirm": "Are you sure you want to delete {0}?",
       "deleteError": "Delete failed",
-      "loadError": "Failed to load"
+      "loadError": "Failed to load",
+      "exportSuccess": "Exported successfully",
+      "exportError": "Export failed"
     },
     "submit": "Submit",
     "formRules": {

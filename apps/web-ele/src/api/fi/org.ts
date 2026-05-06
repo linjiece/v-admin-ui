@@ -83,3 +83,9 @@ export async function delPendingPlanApi(taskId: string) {
 export async function confirmPendingPlanApi(taskId: string) {
   return requestClient.post(`/api/fi/org/plan/pending/${taskId}/confirm`);
 }
+
+export async function exportFiOrgApi(params?: FiOrgQueryParams): Promise<Blob> {
+  return requestClient.download('/api/fi/org/export/excel', {
+    params,
+  });
+}

@@ -22,6 +22,7 @@ export {
   CircleX,
   Copy,
   CornerDownLeft,
+  Download,
   Edit,
   Ellipsis,
   Expand,

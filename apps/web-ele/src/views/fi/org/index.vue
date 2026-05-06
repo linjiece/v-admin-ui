@@ -4,12 +4,12 @@ import type { FiOrgResponse } from '#/api/fi/org';
 import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import { Edit, Trash2 } from '@vben/icons';
+import { Download, Edit, Trash2 } from '@vben/icons';
 import { $t } from '@vben/locales';
 
 import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 
-import { fetchFiOrgListApi } from '#/api/fi/org';
+import { exportFiOrgApi, fetchFiOrgListApi } from '#/api/fi/org';
 import { useMyTable } from '#/components/table';
 
 import {
@@ -125,6 +125,32 @@ const [Grid, gridApi] = useMyTable({
 function refreshGrid() {
   gridApi.reload();
 }
+
+async function handleExport() {
+  try {
+    const formValues = (await gridApi.formApi.getValues?.()) || {};
+    const blob = await exportFiOrgApi({
+      org_code: formValues.org_code,
+      org_name: formValues.org_name,
+      belonged_org: formValues.belonged_org,
+      sector: formValues.sector,
+      ...sortState.value,
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `org-list-${Date.now()}.xlsx`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    ElMessage.success($t('ui.actionMessage.exportSuccess'));
+  } catch {
+    ElMessage.error($t('ui.actionMessage.exportError'));
+  }
+}
 </script>
 
 <template>
@@ -132,6 +158,15 @@ function refreshGrid() {
     <OrgForm ref="orgFormRef" @success="refreshGrid" />
 
     <Grid @sort-change="handleSortChange">
+      <template #toolbar-tools>
+        <ElButton
+          circle
+          :icon="Download"
+          @click="handleExport"
+          :title="$t('common.export')"
+        />
+      </template>
+
       <template #cell-status="{ row }">
         <ElTag :type="getStatusTagType(row.status)" size="small">
           {{ getStatusTagLabel(row.status) }}

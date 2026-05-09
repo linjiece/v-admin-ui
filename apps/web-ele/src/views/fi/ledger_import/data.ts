@@ -41,6 +41,22 @@ export function getCascaderOptions() {
           value: '总承包',
           label: '总承包',
         },
+        {
+          value: '航通公司',
+          label: '航通公司',
+        },
+        {
+          value: '港湾院',
+          label: '港湾院',
+        },
+        {
+          value: '局机关',
+          label: '局机关',
+        },
+        {
+          value: '其他',
+          label: '其他',
+        },
       ],
     },
     { label: '华南建设公司', value: '华南建设公司' },
